@@ -539,14 +539,19 @@
             let targetEl = null;
 
             if (params.xpath) {
-                try {
-                    const result = document.evaluate(params.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-                    if (result && result.singleNodeValue && !isForbiddenTarget(result.singleNodeValue)) {
-                        targetEl = result.singleNodeValue;
-                    } else if (result && result.singleNodeValue && isForbiddenTarget(result.singleNodeValue)) {
-                        console.warn("[ChromeGrid Extension] XPath resolved to forbidden target (e.g. redirect button). Skipping XPath:", result.singleNodeValue);
-                    }
-                } catch (e) {}
+                const rawXp = params.xpath.trim().toLowerCase();
+                if (rawXp.includes("div[4]/div[4]/button") || rawXp.includes("toggle-redirect") || rawXp.includes("redirect")) {
+                    console.warn("[ChromeGrid Extension] Rejected dangerous XPath targeting redirect toggle:", params.xpath);
+                } else {
+                    try {
+                        const result = document.evaluate(params.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                        if (result && result.singleNodeValue && !isForbiddenTarget(result.singleNodeValue)) {
+                            targetEl = result.singleNodeValue;
+                        } else if (result && result.singleNodeValue && isForbiddenTarget(result.singleNodeValue)) {
+                            console.warn("[ChromeGrid Extension] XPath resolved to forbidden target (e.g. redirect button). Skipping XPath:", result.singleNodeValue);
+                        }
+                    } catch (e) {}
+                }
             }
 
             if (!targetEl && params.text) {

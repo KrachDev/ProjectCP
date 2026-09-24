@@ -752,7 +752,10 @@ namespace ChromeGridLauncher.Services
             string cmdId = "cmd_" + Guid.NewGuid().ToString("N").Substring(0, 8);
 
             // Never allow targeting of external redirect / non-refresh buttons
-            if (string.IsNullOrWhiteSpace(xpath) || xpath.Trim() == "/html/body/div[5]/div[1]/button[1]")
+            if (string.IsNullOrWhiteSpace(xpath) || 
+                xpath.Trim() == "/html/body/div[5]/div[1]/button[1]" ||
+                xpath.Trim() == "/html/body/div[4]/div[4]/button" ||
+                xpath.Contains("toggle-redirect"))
             {
                 xpath = "//button[contains(normalize-space(.), 'Refresh') and not(contains(@id, 'redirect'))]";
             }
