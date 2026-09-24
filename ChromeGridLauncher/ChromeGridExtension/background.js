@@ -164,7 +164,7 @@ function connectWs() {
                 tab_id: "chrome_profile_" + Date.now().toString(36),
                 title: "Chrome Profile Bridge",
                 url: "chrome-extension://relay",
-                version: "1.3.2"
+                version: "1.3.3"
             });
 
             // Re-register all known tabs with the server
@@ -460,4 +460,4 @@ try {
 // ─────────────────────────────────────────────────────────────────────────────
 
 connectWs();
-console.log("[ChromeGrid BG v1.3.2] Background service worker initialized. Robust relay active.");
+console.log("[ChromeGrid BG v1.3.3] Background service worker initialized. Robust relay active.");

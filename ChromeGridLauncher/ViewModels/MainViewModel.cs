@@ -80,7 +80,7 @@ namespace ChromeGridLauncher.ViewModels
         private int _slotBStep = 0;
 
         // Refresh state
-        private string _refreshXPath = "/html/body/div[5]/div[1]/button[1]";
+        private string _refreshXPath = "//button[contains(normalize-space(.), 'Refresh') and not(contains(@id, 'redirect'))]";
         private string _refreshText = "Refresh";
         private string _refreshClassName = "btn btn-primary";
         private int _staggerMs = 0;

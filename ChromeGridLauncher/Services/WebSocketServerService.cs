@@ -751,6 +751,12 @@ namespace ChromeGridLauncher.Services
             TotalBroadcasts++;
             string cmdId = "cmd_" + Guid.NewGuid().ToString("N").Substring(0, 8);
 
+            // Never allow targeting of external redirect / non-refresh buttons
+            if (string.IsNullOrWhiteSpace(xpath) || xpath.Trim() == "/html/body/div[5]/div[1]/button[1]")
+            {
+                xpath = "//button[contains(normalize-space(.), 'Refresh') and not(contains(@id, 'redirect'))]";
+            }
+
             var payload = new
             {
                 action = "click_refresh",

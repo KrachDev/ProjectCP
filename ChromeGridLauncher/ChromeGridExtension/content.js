@@ -61,7 +61,7 @@
         let refreshCount = 0;
         let badgeEl = null;
         let isWaitingForBody = false;
-        console.log(`[ChromeGrid Extension v1.3.2] Bridge active for Tab ID: ${tabId} (top: ${isTop})`);
+        console.log(`[ChromeGrid Extension v1.3.3] Bridge active for Tab ID: ${tabId} (top: ${isTop})`);
 
         // ---------------------------------------------------------------------------
         // Visual Status Badge (Only rendered in top window)
@@ -502,6 +502,35 @@
         }
 
         // ---------------------------------------------------------------------------
+        // Safety Guard: Elements that MUST NEVER be clicked
+        // ---------------------------------------------------------------------------
+        function isForbiddenTarget(el) {
+            if (!el || el.nodeType !== Node.ELEMENT_NODE) return true;
+            const id = (el.id || "").toLowerCase();
+            const text = (el.innerText || el.textContent || el.value || "").trim().toLowerCase();
+            const cls = (el.className || "").toString().toLowerCase();
+
+            // Strictly forbid external redirect toggles and non-refresh launcher controls
+            if (id === "toggle-redirect" || id.includes("redirect") || id.includes("toggle-red") || id.includes("autoredirect")) {
+                return true;
+            }
+            if (text.includes("auto redirect") || text.includes("enable auto redirect") || text.includes("disable auto redirect")) {
+                return true;
+            }
+            if (cls.includes("redirect") || cls.includes("toggle-redirect")) {
+                return true;
+            }
+            // Forbid navigational links to prevent leaving the page
+            if (el.tagName === "A") {
+                const href = (el.getAttribute("href") || "").trim();
+                if (href && !href.startsWith("#") && !href.startsWith("javascript:") && (href.startsWith("http") || href.startsWith("/"))) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ---------------------------------------------------------------------------
         // Refresh Command Execution
         // ---------------------------------------------------------------------------
         function executeRefresh(params = {}) {
@@ -512,7 +541,11 @@
             if (params.xpath) {
                 try {
                     const result = document.evaluate(params.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-                    targetEl = result.singleNodeValue;
+                    if (result && result.singleNodeValue && !isForbiddenTarget(result.singleNodeValue)) {
+                        targetEl = result.singleNodeValue;
+                    } else if (result && result.singleNodeValue && isForbiddenTarget(result.singleNodeValue)) {
+                        console.warn("[ChromeGrid Extension] XPath resolved to forbidden target (e.g. redirect button). Skipping XPath:", result.singleNodeValue);
+                    }
                 } catch (e) {}
             }
 
@@ -520,6 +553,7 @@
                 const candidates = Array.from(document.querySelectorAll("button, a, input[type='button'], input[type='submit']"));
                 const targetText = params.text.trim().toLowerCase();
                 targetEl = candidates.find(el => {
+                    if (isForbiddenTarget(el)) return false;
                     const text = (el.innerText || el.textContent || el.value || "").trim().toLowerCase();
                     return text.includes(targetText);
                 });
@@ -528,14 +562,30 @@
             if (!targetEl && params.class_name) {
                 try {
                     const selector = `.${params.class_name.trim().split(" ").join(".")}`;
-                    targetEl = document.querySelector(selector);
+                    const el = document.querySelector(selector);
+                    if (el && !isForbiddenTarget(el)) {
+                        targetEl = el;
+                    }
+                } catch (e) {}
+            }
+
+            // Safe Fallback: Search for legitimate "Refresh" button in DOM that is NOT forbidden
+            if (!targetEl) {
+                try {
+                    const allButtons = Array.from(document.querySelectorAll("button, input[type='button'], input[type='submit'], .btn"));
+                    targetEl = allButtons.find(b => {
+                        if (isForbiddenTarget(b)) return false;
+                        const txt = (b.innerText || b.textContent || b.value || "").trim().toLowerCase();
+                        const id = (b.id || "").toLowerCase();
+                        return (txt === "refresh" || txt.includes("refresh") || id.includes("refresh") || id === "btnrefresh");
+                    });
                 } catch (e) {}
             }
 
             let success = false;
             let err = null;
 
-            if (targetEl) {
+            if (targetEl && !isForbiddenTarget(targetEl)) {
                 try {
                     targetEl.focus();
                     targetEl.dispatchEvent(new MouseEvent("click", { view: window, bubbles: true, cancelable: true }));
@@ -545,7 +595,7 @@
                     err = String(e);
                 }
             } else {
-                err = "Target refresh element not found in DOM.";
+                err = "Target refresh element not found in DOM (or was rejected as forbidden redirect button).";
                 if (params.reloadFallback) {
                     window.location.reload();
                     success = true;
