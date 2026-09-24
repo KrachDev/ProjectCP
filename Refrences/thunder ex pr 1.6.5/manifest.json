@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "ThunderBolt Portugal",
+  "version": "1.8.7",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApcdxoOxnLHuJiQQrZiZoQ67PdrdjPjQzKnOf1H81IO/vborZ5hPhIpQxRyLcMF8Wn6f5Yf/9RGDJMnvA7ulgyg7DNjG9xS62/oCD4ArvRa3y224K4wUamNHvl6I7xWlQBA6x3Rbv52oEgkpAy51CoY9AbQpu6maZdKFOCaBgn+95ThM9sUTQdoaHP1IWf8ncFFEM3p6pYp1dKRXszpQo/diP6d8eaQjhktMlTA5oGu6ZvmOGLwwPMp/6HPPf9hzoNjNmUlmr4rA7lctbD75kx9RdEDmNgjrkNQGfvJj7KFQpHJiWSEqbHnrF1Gmoj7hLa43cytzD4ba7NVtG2HRI0QIDAQAB",
+  "description": "ThunderBolt is a tool that helps you take appointments on BLS International website for Portugal!",
+  "permissions": [
+    "webRequest",
+    "storage",
+    "tabs",
+    "scripting",
+    "declarativeNetRequest",
+    "webNavigation",
+    "activeTab",
+    "proxy",
+    "browsingData",
+    "webRequestAuthProvider"
+  ],
+  "host_permissions": ["*://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules/rules_1.json"
+      },
+      {
+        "id": "ruleset_2",
+        "enabled": true,
+        "path": "rules/rules_2.json"
+      },
+      {
+        "id": "ruleset_3",
+        "enabled": true,
+        "path": "rules/rules_3.json"
+      }
+    ]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "*.js",
+        "loaded/images/*",
+        "loaded/styles/*",
+        "loaded/scripts/*",
+        "loaded/webfonts/*"
+      ],
+      "matches": ["*://morocco.blsportugal.com/*"]
+    }
+  ],
+  "content_scripts": [
+    {"matches": ["*://morocco.blsportugal.com/*"],"js": ["bridge.js"],"run_at": "document_start"},
+    {"matches": ["*://morocco.blsportugal.com/*"],"js": ["js/copy.js"],"run_at": "document_start"},
+    {"matches": ["*://morocco.blsportugal.com/*"], "js": ["content.js"]}
+  ],
+  "icons": {
+    "16": "icon/icon16.png",
+    "48": "icon/icon48.png",
+    "128": "icon/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon/icon16.png",
+      "48": "icon/icon48.png",
+      "128": "icon/icon128.png"
+    },
+    "default_title": "ThunderBolt Portugal",
+    "default_popup": "popup.html"
+  }
+}

@@ -1,0 +1,143 @@
+<UserControl x:Class="ChromeGridLauncher.Views.Controls.GridCellCardControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Cursor="Hand"
+             MouseLeftButtonUp="OnCardClick">
+    <Border Background="{StaticResource CardDarkBrush}"
+            CornerRadius="10"
+            Padding="8"
+            Margin="3"
+            BorderBrush="{Binding BorderColor}"
+            BorderThickness="1.5">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Top Header Row: Cell Tag, Resolution pill, Clear Button -->
+            <Grid Grid.Row="0" Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding CellTag}"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="10"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ResolutionText}"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               FontSize="9"
+                               VerticalAlignment="Center"
+                               Margin="0,0,6,0"/>
+
+                    <Button Content="✕"
+                            Click="OnClearClick"
+                            Visibility="{Binding HasProfile, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Foreground="{StaticResource TextMutedBrush}"
+                            FontSize="10"
+                            FontWeight="Bold"
+                            Padding="3,1"
+                            Cursor="Hand"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Center Body: Profile Info or Empty Placeholder -->
+            <!-- Profile Info Body -->
+            <StackPanel Grid.Row="1"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Visibility="{Binding HasProfile, Converter={StaticResource BooleanToVisibilityConverter}}">
+                
+                <!-- Avatar Circle -->
+                <Border Width="38" Height="38"
+                        CornerRadius="19"
+                        Background="{Binding AssignedProfile.Color}"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,4">
+                    <TextBlock Text="{Binding AssignedProfile.Initials}"
+                               Foreground="White"
+                               FontWeight="Bold"
+                               FontSize="13"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
+
+                <!-- Profile Name -->
+                <TextBlock Text="{Binding AssignedProfile.DisplayName}"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           FontWeight="Bold"
+                           FontSize="12"
+                           TextAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="140"
+                           HorizontalAlignment="Center"/>
+
+                <!-- Group Badge Pill (if present) -->
+                <Border Background="{Binding AssignedProfile.GroupColor}"
+                        CornerRadius="4"
+                        Padding="5,1"
+                        Margin="0,2,0,0"
+                        HorizontalAlignment="Center"
+                        Visibility="{Binding AssignedProfile.GroupName, Converter={StaticResource StringToVisibilityConverter}}">
+                    <TextBlock Text="{Binding AssignedProfile.GroupName}"
+                               Foreground="White"
+                               FontSize="9"
+                               FontWeight="Bold"/>
+                </Border>
+
+                <!-- Profile Key Subtitle -->
+                <TextBlock Text="{Binding AssignedProfile.Key}"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="10"
+                           HorizontalAlignment="Center"
+                           Margin="0,1,0,0"/>
+
+                <!-- Active / Launch Status -->
+                <TextBlock Text="{Binding StatusText}"
+                           Foreground="{StaticResource AccentGreenBrush}"
+                           FontSize="10"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           Margin="0,2,0,0"
+                           Visibility="{Binding HasStatus, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </StackPanel>
+
+            <!-- Empty Placeholder Body -->
+            <StackPanel Grid.Row="1"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Visibility="{Binding HasProfile, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                <TextBlock Text="＋"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Empty Cell"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="11"
+                           HorizontalAlignment="Center"
+                           Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <!-- Bottom Change Button -->
+            <Button Grid.Row="2"
+                    Content="Change Profile"
+                    Click="OnChangeProfileClick"
+                    Visibility="{Binding HasProfile, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Padding="6,3"
+                    FontSize="10"
+                    Margin="0,4,0,0"
+                    HorizontalAlignment="Stretch"/>
+        </Grid>
+    </Border>
+</UserControl>

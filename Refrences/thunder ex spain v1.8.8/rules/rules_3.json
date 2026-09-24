@@ -1,0 +1,178 @@
+[
+    {
+        "id": 41,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/site.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/css/site.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    },
+    {
+        "id": 42,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/style.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/css/style.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    },
+    {
+        "id": 47,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/bootstrap.min.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/vendor/bootstrap/dist/css/bootstrap.min.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    },
+    {
+        "id": 48,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/kendo.common.min.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/kendo/css/kendo.common.min.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    },
+    {
+        "id": 49,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/keyboard.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/virtualkeyboard/css/keyboard.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    },
+    {
+        "id": 50,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/kendo.silver.min.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/kendo/css/kendo.silver.min.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    },
+    {
+        "id": 51,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/tiny-slider.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/tiny-slider/tiny-slider.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    },
+    {
+        "id": 52,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/color.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/css/color.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    },
+    {
+        "id": 53,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/choices.min.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/choices/css/choices.min.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    },
+    {
+        "id": 54,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/flatpickr.min.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/flatpickr/css/flatpickr.min.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    },
+    {
+        "id": 55,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/styles/glightbox.css"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/glightbox/css/glightbox.css*",
+            "resourceTypes": [
+                "stylesheet"
+            ]
+        }
+    }
+]

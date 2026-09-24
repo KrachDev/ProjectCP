@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "ThunderBolt Spain",
+  "version": "1.8.7",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwszM35BA7n3N1vyyepj5qzl1xi6LT+tI2Jc8+Ff/ohaR/kMa/Grlh+PrbMo3gOg0B3Q4lXnODRzwgNB6FN07g46Kf3wtTrGggNLzogPBTJpCXK980NyciGEC1N81a9NMt7Hay438WrQduLdFecmjQxYk85GWqyAsNRff4NanOT2YGPWe1DIFnndw0Ke7JBVHG2y1HEW8gpXWAr/ucrLWw0TaV495xFzCqVsYcxJWEODji3LJAP/R7frx8sVKXvu1TRXODUbhcHqsrBj5L+n7DEKpEUDJxJuuoN68f/klj5U0ScgCa0qPFcFv+mu5+ijl+IFyyfzxUBQer9U222zkPQIDAQAB",
+  "description": "ThunderBolt is a tool that helps you take appointments on BLS International website for Spain!",
+  "permissions": [
+    "webRequest",
+    "storage",
+    "tabs",
+    "scripting",
+    "declarativeNetRequest",
+    "webNavigation",
+    "activeTab",
+    "proxy",
+    "browsingData",
+    "webRequestAuthProvider"
+  ],
+  "host_permissions": ["*://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules/rules_1.json"
+      },
+      {
+        "id": "ruleset_2",
+        "enabled": true,
+        "path": "rules/rules_2.json"
+      },
+      {
+        "id": "ruleset_3",
+        "enabled": true,
+        "path": "rules/rules_3.json"
+      }
+    ]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "*.js",
+        "loaded/images/*",
+        "loaded/styles/*",
+        "loaded/scripts/*",
+        "loaded/webfonts/*"
+      ],
+      "matches": ["*://*.blsspainmorocco.net/*", "*://*.blsspainglobal.com/*"]
+    }
+  ],
+  "content_scripts": [
+    {"matches": ["*://*.blsspainmorocco.net/*"],"js": ["bridge.js"],"run_at": "document_start"},
+    {"matches": ["*://*.blsspainmorocco.net/*"],"js": ["js/copy.js"]},
+    {"matches": ["*://*.blsspainmorocco.net/*"], "js": ["content.js"]}
+  ],
+  "icons": {
+    "16": "icon/icon16.png",
+    "48": "icon/icon48.png",
+    "128": "icon/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon/icon16.png",
+      "48": "icon/icon48.png",
+      "128": "icon/icon128.png"
+    },
+    "default_title": "ThunderBolt",
+    "default_popup": "popup.html"
+  }
+}

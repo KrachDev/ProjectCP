@@ -1,0 +1,300 @@
+[
+    {
+        "id": 22,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/jquery.min.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/vendor/jquery/dist/jquery.min.js",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 23,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/jquery.validate.min.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/vendor/jquery-validation/dist/jquery.validate.min.js",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 24,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/bootstrap.bundle.min.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js?v=*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 25,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/jquery.validate.unobtrusive.min.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 26,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/tiny-slider.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/vendor/tiny-slider/tiny-slider.js?v=*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 27,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/purecounter_vanilla.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/vendor/purecounterjs/dist/purecounter_vanilla.js?v=*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 28,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/glightbox.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/vendor/glightbox/js/glightbox.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 29,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/site.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/js/site.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 30,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/kendo.all.min.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/vendor/kendo/js/kendo.all.min.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 11,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/jquery-ui-custom.min.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/virtualkeyboard/js/jquery-ui-custom.min.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 12,
+        "priority": 1,
+        "action": {
+            "type": "block"
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/vendor/jarallax/jarallax-video.min.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 13,
+        "priority": 1,
+        "action": {
+            "type": "block"
+        },
+        "condition": {
+            "urlFilter": "*://*.blsspainmorocco.net/assets/vendor/jarallax/jarallax.min.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 14,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/jquery-ajax-unobtrusive.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/jquery-ajax-unobtrusive/jquery-ajax-unobtrusive.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 15,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/functions.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/js/functions.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 16,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/flatpickr.min.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/flatpickr/js/flatpickr.min.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 17,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/choices.min.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/choices/js/choices.min.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 18,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/jquery.keyboard.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/virtualkeyboard/js/jquery.keyboard.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 19,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/jquery.keyboard.extension-scramble.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/virtualkeyboard/js/jquery.keyboard.extension-scramble.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    },
+    {
+        "id": 20,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "extensionPath": "/loaded/scripts/moment.js"
+            }
+        },
+        "condition": {
+            "urlFilter": "*://www.blsspainmorocco.net/assets/vendor/moment/moment.js*",
+            "resourceTypes": [
+                "script"
+            ]
+        }
+    }
+]

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Proxy Switcher</title>
+    <style> </style>
+  </head>
+  <link rel="stylesheet" href="/popup.css">
+  <body>
+    <div class="connection-div">
+      <button id="reconnect-btn" class="reconnect">Connect</button>
+    </div>
+
+    <main style="display:none">
+      <div class="main-tabs">
+        <div class="main-tab active" data-main="settings-main">Settings</div>
+        <div class="main-tab" data-main="options-main">Options</div>
+        <div class="main-tab" data-main="proxy-main">Proxy</div>
+      </div>
+
+      <div id="settings-main" class="main-tab-content active">
+        <div class="tabs">
+          <div class="tab active" data-tab="primary-settings">Primary</div>
+          <div class="tab" data-tab="advanced-settings">Advanced</div>
+        </div>
+
+        <div id="primary-settings-tab" class="tab-content active">
+          <div class="settings-container">
+            <div class="setting-row toggle-row">
+              <label for="autoLogin">Auto Login</label>
+              <label class="switch">
+                <input type="checkbox" id="autoLogin">
+                <span class="slider round"></span>
+              </label>
+            </div>
+            <div class="setting-row toggle-row">
+              <label for="autoCaptcha">Auto Captcha</label>
+              <label class="switch">
+                <input type="checkbox" id="autoCaptcha">
+                <span class="slider round"></span>
+              </label>
+            </div>
+            <div class="setting-row toggle-row">
+              <label for="autoSubmitVt">Auto Visatype</label>
+              <label class="switch">
+                <input type="checkbox" id="autoSubmitVt">
+                <span class="slider round"></span>
+              </label>
+            </div>
+            <div class="setting-row toggle-row">
+              <label for="autoSubmitSlot">Auto Submit Slot</label>
+              <label class="switch">
+                <input type="checkbox" id="autoSubmitSlot">
+                <span class="slider round"></span>
+              </label>
+            </div>
+            <div class="setting-row toggle-row">
+              <label for="autoSlotRedirect">Auto Retry Calendar</label>
+              <label class="switch">
+                <input type="checkbox" id="autoSlotRedirect">
+                <span class="slider round"></span>
+              </label>
+            </div>
+            <div class="setting-row toggle-row">
+              <label for="autoRedirectOnSec">Auto Retry Calendar /Sec</label>
+              <label class="switch">
+                <input type="checkbox" id="autoRedirectOnSec">
+                <span class="slider round"></span>
+              </label>
+            </div>
+            <div class="setting-row toggle-row">
+              <label for="autoProxyRotation">Auto Proxy Rotation</label>
+              <label class="switch">
+                <input type="checkbox" id="autoProxyRotation">
+                <span class="slider round"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <div id="advanced-settings-tab" class="tab-content">
+          <div class="settings-container">
+            <!--
+            <div class="setting-row">
+              <label for="accounts">Accounts :</label>
+              <select id="accounts">
+                <option value=""></option>
+              </select>
+            </div>
+            <br>
+            -->
+            <div class="setting-row">
+              <label for="type">Visa Type :</label>
+              <select id="type">
+                <option value="Schengen Visa">Schengen Visa</option>
+                <option value="Student Visa">Student Visa</option>
+                <option value="Work Visa">Work Visa</option>
+                <option value="National Visa">National Visa</option>
+                <option value="Casa 1">Casa 1</option>
+                <option value="Casa 2">Casa 2</option>
+                <option value="Family Reunification Visa">Family Reunification Visa</option>
+                <option value="Schengen Visa Prior 2023">Schengen Visa Prior 2023</option>
+                <option value="Students - Language/selectivity">Students - Language/selectivity</option>
+                <option value="Students - Non-tertiary studies">Students - Non-tertiary studies</option>
+                <option value="Students - Graduate studies">Students - Graduate studies</option>
+                <option value="Student - Others">Student - Others</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label for="city">Center :</label>
+              <select id="city">
+                <option value="Casablanca">Casablanca</option>
+                <option value="Nador">Nador</option>
+                <option value="Tetouan">Tetouan</option>
+                <option value="Tangier">Tangier</option>
+                <option value="Rabat">Rabat</option>
+                <option value="Agadir">Agadir</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label for="category">Category :</label>
+              <select id="category">
+                <option value="Normal">Normal</option>
+                <option value="Premium">Premium</option>
+                <option value="Prime Time">Prime Time</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label for="members">Members :</label>
+              <select id="members">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="options-main" class="main-tab-content">
+        <div class="info-container">
+          <div class="setting-row">
+            <label for="accounts">Account :</label>
+            <select id="accounts">
+              <option value=""></option>
+            </select>
+          </div>
+          <br><div class="setting-row">
+            <label for="onMaxTries">On Max Attempts :</label>
+            <select id="onMaxTries">
+              <option value="New App">New App</option>
+              <option value="Switch Proxy">Switch Proxy</option>
+            </select>
+          </div>
+          <br>
+          <div class="setting-row">
+            <label for="nextProxyFrom">Next Proxy From :</label>
+            <select id="nextProxyFrom">
+              <option value="List">List</option>
+              <option value="Launcher">Launcher</option>
+            </select>
+          </div>
+          <br>
+          <div class="setting-row">
+            <label for="delayRange">Delay (seconds):</label>
+            <input type="range" id="delayRange" min="1" max="120" value="1">
+            <span id="delayValue">1</span>
+          </div>
+          <br>
+          <div class="setting-row">
+            <label for="maxAttemptsRange">Attemps (value):</label>
+            <input type="range" id="maxAttemptsRange" min="1" max="60" value="1">
+            <span id="maxAttemptsvalue">1</span>
+          </div><br>
+          <div class="setting-row toggle-row">
+            <label for="ignore">Submit Off</label>
+            <label class="switch">
+              <input type="checkbox" id="ignore">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div id="proxy-main" class="main-tab-content">
+        <div class="tabs">
+          <div class="tab active" data-tab="control">Proxy List</div>
+          <div class="tab" data-tab="manage">Import Proxies</div>
+        </div>
+
+        <div id="control-tab" class="tab-content active">
+          <select id="proxySelect" 
+                  class="proxy-select" 
+                  size="6"
+                  aria-label="Proxy list">
+          </select>
+
+          <button id="activateSelectedProxy" class="full-width">Activate Selected Proxy</button>
+          <div class="button-group">
+            <button id="activateNextProxy">Next Proxy</button>
+            <button id="deactivateProxy">Deactivate</button>
+          </div>
+          <div class="info-container">
+            <div id="status" class="proxy-header">
+              <span id="statusInfo">Proxy: Unknown</span>
+              <button class="copy-button">
+                <img src="icon/copy.png" alt="Copy Icon" class="copy-icon">
+              </button>
+            </div>
+            <div id="proxyInfo" class="proxy-ip">Current IP:</div>
+          </div>
+        </div>
+
+        <div id="manage-tab" class="tab-content">
+          <textarea id="proxyList" 
+            placeholder="Paste your Proxy data here"
+            spellcheck="false"></textarea>
+          <button id="updateProxyList">Update Proxy List</button>
+        </div>
+      </div>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

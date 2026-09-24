@@ -1,0 +1,53 @@
+<Window x:Class="ChromeGridLauncher.Views.Modals.LoadLayoutModal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Saved Grid Layout Presets" Height="480" Width="550"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{StaticResource BgDarkBrush}">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="📂 Saved Grid Layouts" Foreground="{StaticResource TextPrimaryBrush}" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Import JSON" Click="OnImportClick" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" Padding="8,4" FontSize="11" />
+                <Button Content="Export JSON" Click="OnExportClick" Style="{StaticResource SecondaryButtonStyle}" Padding="8,4" FontSize="11" />
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Layout List -->
+        <Border Grid.Row="1" Background="{StaticResource CardDarkBrush}" CornerRadius="8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Margin="0,0,0,16">
+            <ListBox x:Name="LayoutListBox" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource BgDarkBrush}" CornerRadius="6" Padding="12" Margin="4" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Name}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="Bold" FontSize="14" />
+                                    <TextBlock Text="{Binding SavedAt, StringFormat='Saved: {0:yyyy-MM-dd HH:mm}'}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,2,0,0" />
+                                    <TextBlock Text="{Binding Cells.Count, StringFormat='Cells: {0}'}" Foreground="{StaticResource AccentBlueBrush}" FontSize="11" FontWeight="SemiBold" Margin="0,2,0,0" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="Load" Click="OnLoadItemClick" Tag="{Binding}" Style="{StaticResource SuccessButtonStyle}" Margin="0,0,8,0" Padding="12,6" FontSize="11" />
+                                    <Button Content="Delete" Click="OnDeleteItemClick" Tag="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Padding="10,6" FontSize="11" Foreground="#EF4444" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <Button Grid.Row="2" Content="Close" Click="OnCloseClick" Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Right" Padding="16,8" />
+    </Grid>
+</Window>
