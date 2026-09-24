@@ -22,7 +22,7 @@ goto SEND_EXTENSION
 
 :SEND_EXTENSION
 echo.
-echo [*] Syncing latest extension files (v1.3.1)...
+echo [*] Syncing latest extension files...
 if not exist "%~dp0publish\ChromeGridExtension" mkdir "%~dp0publish\ChromeGridExtension"
 copy /y "%~dp0ChromeGridLauncher\ChromeGridExtension\manifest.json" "%~dp0publish\ChromeGridExtension\manifest.json" >nul
 copy /y "%~dp0ChromeGridLauncher\ChromeGridExtension\background.js" "%~dp0publish\ChromeGridExtension\background.js" >nul

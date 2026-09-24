@@ -59,7 +59,7 @@ if "!IS_EXT!"=="1" (
 
     echo.
     echo ========================================================
-    echo   [SUCCESS] C:\ChromeGridExtension updated to v1.3.1!
+    echo   [SUCCESS] C:\ChromeGridExtension updated!
     echo.
     echo   ACTIVATION (Do ONE of the following):
     echo   1. If ChromeGridLauncher is running, reload command was sent!
