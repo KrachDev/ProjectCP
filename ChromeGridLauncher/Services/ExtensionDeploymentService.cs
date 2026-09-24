@@ -268,7 +268,7 @@ namespace ChromeGridLauncher.Services
 {
   "manifest_version": 3,
   "name": "Chrome Grid Sync Bridge",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Ultra-reliable native sync bridge for Chrome Grid Launcher. Zero-install, DRM-proof, and zero proxy interference.",
   "permissions": [
     "storage",

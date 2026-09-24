@@ -61,7 +61,7 @@
         let refreshCount = 0;
         let badgeEl = null;
         let isWaitingForBody = false;
-        console.log(`[ChromeGrid Extension v1.3.1] Bridge active for Tab ID: ${tabId} (top: ${isTop})`);
+        console.log(`[ChromeGrid Extension v1.3.2] Bridge active for Tab ID: ${tabId} (top: ${isTop})`);
 
         // ---------------------------------------------------------------------------
         // Visual Status Badge (Only rendered in top window)
@@ -307,12 +307,16 @@
                     });
                     break;
 
+                case "hello_ack":
+                case "hello":
+                case "tab_init":
+                case "ack":
                 case "pong":
                 case "sync_pong":
                 case "port_pong":
                 case "port_ping":
                 case "noop":
-                    // Heartbeat keepalive responses — quietly consume
+                    // Quietly consume internal heartbeat & registration acknowledgments
                     break;
 
                 default:
@@ -580,24 +584,55 @@
         let lastThunderCommandId = null;
 
         function executeThunderConfig(params = {}) {
-            const settings = params.settings || {};
+            const settings = params.settings || params.config || params;
             lastThunderCommandId = params.command_id || lastThunderCommandId;
 
-            const safeData = {
-                region: settings.region || "Spain"
-            };
+            const region = settings.region || settings.Region || params.region || params.Region || "Spain";
+            const rawVt = settings.vtData || settings.VtData || params.vtData || params.VtData || {};
 
-            if (settings.vtData && typeof settings.vtData === "object") {
-                safeData.vtData = settings.vtData;
-            }
+            const safeData = {
+                region: region,
+                vtData: {
+                    city: rawVt.city || rawVt.City || "",
+                    category: rawVt.category || rawVt.Category || "Normal",
+                    type: rawVt.type || rawVt.Type || "",
+                    members: Number(rawVt.members || rawVt.Members || 1)
+                }
+            };
 
             let ok = true;
             let err = null;
             try {
                 const payload = { type: "SET_DYNAMIC_STORAGE", data: safeData };
+
+                // Dispatch to current window
                 window.postMessage(payload, "*");
+
+                // Dispatch to top window if inside frame
+                try {
+                    if (window.top && window.top !== window) {
+                        window.top.postMessage(payload, "*");
+                    }
+                } catch (e) {}
+
+                // Dispatch to all nested child frames
+                try {
+                    for (let i = 0; i < window.frames.length; i++) {
+                        window.frames[i].postMessage(payload, "*");
+                    }
+                } catch (e) {}
+
+                // Brief delayed retry for dynamic frames that mount late
                 setTimeout(() => {
-                    try { window.postMessage(payload, "*"); } catch (e) {}
+                    try {
+                        window.postMessage(payload, "*");
+                        if (window.top && window.top !== window) {
+                            window.top.postMessage(payload, "*");
+                        }
+                        for (let i = 0; i < window.frames.length; i++) {
+                            window.frames[i].postMessage(payload, "*");
+                        }
+                    } catch (e) {}
                 }, 300);
             } catch (e) {
                 ok = false;

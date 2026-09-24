@@ -809,8 +809,25 @@ namespace ChromeGridLauncher.Services
                 type = "THUNDER_CONFIG",
                 command_id = cmdId,
                 config = config,
+                settings = new
+                {
+                    region = config.Region,
+                    vtData = new
+                    {
+                        city = config.VtData?.City,
+                        category = config.VtData?.Category,
+                        type = config.VtData?.Type,
+                        members = config.VtData?.Members ?? 1
+                    }
+                },
                 region = config.Region,
-                vtData = config.VtData,
+                vtData = new
+                {
+                    city = config.VtData?.City,
+                    category = config.VtData?.Category,
+                    type = config.VtData?.Type,
+                    members = config.VtData?.Members ?? 1
+                },
                 target_tab_ids = targetTabIds,
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0
             };

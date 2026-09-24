@@ -164,7 +164,7 @@ function connectWs() {
                 tab_id: "chrome_profile_" + Date.now().toString(36),
                 title: "Chrome Profile Bridge",
                 url: "chrome-extension://relay",
-                version: "1.3.1"
+                version: "1.3.2"
             });
 
             // Re-register all known tabs with the server
@@ -199,8 +199,8 @@ function connectWs() {
                     return;
                 }
 
-                // Heartbeat / ping responses from server: consume quietly, do not broadcast to tabs
-                if (action === "pong" || action === "sync_pong" || action === "noop") {
+                // Heartbeat / ping responses / hello acknowledgment from server: consume quietly, do not broadcast to tabs
+                if (action === "hello_ack" || action === "pong" || action === "sync_pong" || action === "noop") {
                     if (data.build_hash) {
                         checkBuildHash(data.build_hash);
                     }
@@ -460,4 +460,4 @@ try {
 // ─────────────────────────────────────────────────────────────────────────────
 
 connectWs();
-console.log("[ChromeGrid BG v1.3.1] Background service worker initialized. Robust relay active.");
+console.log("[ChromeGrid BG v1.3.2] Background service worker initialized. Robust relay active.");
