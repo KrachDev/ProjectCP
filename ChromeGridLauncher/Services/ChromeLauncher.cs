@@ -69,14 +69,24 @@ namespace ChromeGridLauncher.Services
             bool dwmCompensation = true,
             int dwmBorderOffset = 7,
             HashSet<IntPtr>? alreadyManagedHwnds = null,
-            bool enableNativeExtension = true)
+            bool enableNativeExtension = true,
+            string? targetExeName = null)
         {
+            string exeName = !string.IsNullOrWhiteSpace(targetExeName)
+                ? Path.GetFileName(targetExeName).ToLowerInvariant()
+                : (!string.IsNullOrWhiteSpace(chromeExe) ? Path.GetFileName(chromeExe).ToLowerInvariant() : "chrome.exe");
+
             if (string.IsNullOrWhiteSpace(chromeExe) || !File.Exists(chromeExe))
             {
-                chromeExe = ChromeProfileScanner.FindChromeExecutable();
+                chromeExe = exeName switch
+                {
+                    "brave.exe" => ChromeProfileScanner.FindBraveExecutable(),
+                    "msedge.exe" => ChromeProfileScanner.FindEdgeExecutable(),
+                    _ => ChromeProfileScanner.FindChromeExecutable()
+                };
             }
 
-            var existingWindows = WindowPlacementService.GetChromeWindows();
+            var existingWindows = WindowPlacementService.GetBrowserWindows(exeName);
             var existingHwnds = new HashSet<IntPtr>(existingWindows.Select(w => w.Hwnd));
             if (alreadyManagedHwnds != null)
             {
@@ -93,22 +103,27 @@ namespace ChromeGridLauncher.Services
 
             argsList.AddRange(ChromePerfFlags);
 
-            // Auto-load stealth native Chrome extension (Option B: Zero-Install, isolated context, no CDP)
+            // Auto-load stealth native Chrome extension & Phylakon
             if (enableNativeExtension)
             {
+                string phylakonDir = @"C:\Users\krach\Documents\BLS Project\Phylakon";
                 string? extDir = GetExtensionDirectory();
-                if (!string.IsNullOrEmpty(extDir))
+                var loadedExts = new List<string>();
+                if (Directory.Exists(phylakonDir)) loadedExts.Add(phylakonDir);
+                if (!string.IsNullOrEmpty(extDir) && Directory.Exists(extDir) && !extDir.Equals(phylakonDir, StringComparison.OrdinalIgnoreCase))
                 {
-                    argsList.Add($"--load-extension=\"{extDir}\"");
+                    loadedExts.Add(extDir);
+                }
+                if (loadedExts.Count > 0)
+                {
+                    argsList.Add($"--load-extension=\"{string.Join(",", loadedExts)}\"");
                 }
             }
 
-            // Chrome has an OS-level minimum window width (~516px on Windows at 100% DPI).
-            // For high-density grids where cell width < 500px (e.g. 10 columns or narrow monitors),
-            // force device scale factor to scale Chrome controls down so it can shrink cleanly without overlapping.
-            if (w < 500)
+            // For ultra-dense grids where cell width < 260px, gently adjust device scale factor
+            if (w > 0 && w < 260)
             {
-                double scale = Math.Round(Math.Clamp((w - 10) / 490.0, 0.40, 1.0), 2);
+                double scale = Math.Round(Math.Clamp(w / 300.0, 0.50, 1.0), 2);
                 argsList.Add($"--force-device-scale-factor={scale.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
             }
 
@@ -132,7 +147,7 @@ namespace ChromeGridLauncher.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ChromeLauncher] Failed to launch Chrome: {ex.Message}");
+                Console.WriteLine($"[ChromeLauncher] Failed to launch {exeName}: {ex.Message}");
                 return IntPtr.Zero;
             }
 
@@ -145,7 +160,7 @@ namespace ChromeGridLauncher.Services
             {
                 Thread.Sleep(120);
 
-                currentWindows = WindowPlacementService.GetChromeWindows();
+                currentWindows = WindowPlacementService.GetBrowserWindows(exeName);
                 var currentHwnds = currentWindows.Select(cw => cw.Hwnd);
                 var newHwnds = currentHwnds.Where(hwnd => !existingHwnds.Contains(hwnd)).ToList();
 
@@ -156,11 +171,11 @@ namespace ChromeGridLauncher.Services
                 }
             }
 
-            // Fallback: check foreground window or unmanaged Chrome window
+            // Fallback: check foreground window or unmanaged browser window
             if (targetHwnd == IntPtr.Zero)
             {
                 IntPtr fgHwnd = WindowPlacementService.GetForegroundWindow();
-                if (fgHwnd != IntPtr.Zero && WindowPlacementService.IsChromeWindow(fgHwnd) && !existingHwnds.Contains(fgHwnd))
+                if (fgHwnd != IntPtr.Zero && WindowPlacementService.IsBrowserWindow(fgHwnd, exeName) && !existingHwnds.Contains(fgHwnd))
                 {
                     targetHwnd = fgHwnd;
                 }
@@ -194,9 +209,11 @@ namespace ChromeGridLauncher.Services
         public static int CloseManagedWindows(
             HashSet<IntPtr> managedHwnds,
             string protectedProfileKey,
-            string protectedProfileName = "")
+            string protectedProfileName = "",
+            string? targetExeName = null)
         {
-            var activeWindows = WindowPlacementService.GetChromeWindows();
+            string? exeFilter = !string.IsNullOrWhiteSpace(targetExeName) ? Path.GetFileName(targetExeName).ToLowerInvariant() : null;
+            var activeWindows = WindowPlacementService.GetBrowserWindows(exeFilter);
             if (activeWindows.Count == 0 && managedHwnds.Count == 0)
                 return 0;
 
@@ -207,7 +224,7 @@ namespace ChromeGridLauncher.Services
             {
                 foreach (var h in managedHwnds)
                 {
-                    if (WindowPlacementService.IsWindow(h) && WindowPlacementService.IsChromeWindow(h))
+                    if (WindowPlacementService.IsWindow(h) && WindowPlacementService.IsBrowserWindow(h, exeFilter))
                         candidateHwnds.Add(h);
                 }
             }
@@ -220,7 +237,7 @@ namespace ChromeGridLauncher.Services
             int closedCount = 0;
             foreach (var hwnd in candidateHwnds)
             {
-                if (!WindowPlacementService.IsChromeWindow(hwnd))
+                if (!WindowPlacementService.IsBrowserWindow(hwnd, exeFilter))
                     continue;
 
                 // Protect personal profile from being closed
@@ -249,7 +266,7 @@ namespace ChromeGridLauncher.Services
                 }
             }
 
-            managedHwnds.Clear();
+            managedHwnds.RemoveWhere(h => !WindowPlacementService.IsWindow(h));
             return closedCount;
         }
     }

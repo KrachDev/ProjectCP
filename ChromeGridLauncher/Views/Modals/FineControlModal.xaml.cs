@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using ChromeGridLauncher.Models;
@@ -14,6 +15,7 @@ namespace ChromeGridLauncher.Views.Modals
             UpdatedSettings = new AppSettings
             {
                 Theme = currentSettings.Theme,
+                SelectedBrowser = currentSettings.SelectedBrowser,
                 MonitorIndex = currentSettings.MonitorIndex,
                 CellGap = currentSettings.CellGap,
                 WindowTimeout = currentSettings.WindowTimeout,
@@ -22,8 +24,16 @@ namespace ChromeGridLauncher.Views.Modals
                 CustomRows = currentSettings.CustomRows,
                 CustomCols = currentSettings.CustomCols,
                 ChromePathOverride = currentSettings.ChromePathOverride,
+                BravePathOverride = currentSettings.BravePathOverride,
+                EdgePathOverride = currentSettings.EdgePathOverride,
+                ChromeUserDataOverride = currentSettings.ChromeUserDataOverride,
+                BraveUserDataOverride = currentSettings.BraveUserDataOverride,
+                EdgeUserDataOverride = currentSettings.EdgeUserDataOverride,
                 ProtectedProfileKey = currentSettings.ProtectedProfileKey,
                 UseFullScreen = currentSettings.UseFullScreen,
+                UseCustomWindowSize = currentSettings.UseCustomWindowSize,
+                CustomWindowWidth = currentSettings.CustomWindowWidth,
+                CustomWindowHeight = currentSettings.CustomWindowHeight,
                 ScreenMargins = new ScreenMargins
                 {
                     Top = currentSettings.ScreenMargins.Top,
@@ -40,6 +50,18 @@ namespace ChromeGridLauncher.Views.Modals
             };
 
             // Initialize controls
+            if (UpdatedSettings.UseCustomWindowSize)
+            {
+                RadioCustomSize.IsChecked = true;
+            }
+            else
+            {
+                RadioAutoFit.IsChecked = true;
+            }
+
+            TxtCustomWidth.Text = (UpdatedSettings.CustomWindowWidth > 0 ? UpdatedSettings.CustomWindowWidth : 960).ToString();
+            TxtCustomHeight.Text = (UpdatedSettings.CustomWindowHeight > 0 ? UpdatedSettings.CustomWindowHeight : 540).ToString();
+
             if (UpdatedSettings.UseFullScreen)
             {
                 RadioFullScreen.IsChecked = true;
@@ -60,17 +82,30 @@ namespace ChromeGridLauncher.Views.Modals
 
         private void OnResetClick(object sender, RoutedEventArgs e)
         {
+            RadioAutoFit.IsChecked = true;
+            TxtCustomWidth.Text = "960";
+            TxtCustomHeight.Text = "540";
             RadioWorkArea.IsChecked = true;
             TxtMarginTop.Text = "0";
             TxtMarginBottom.Text = "0";
             TxtMarginLeft.Text = "0";
             TxtMarginRight.Text = "0";
-            ChkShadowCompensate.IsChecked = true;
-            TxtShadowOffset.Text = "7";
+            ChkShadowCompensate.IsChecked = false;
+            TxtShadowOffset.Text = "0";
         }
 
         private void OnApplyClick(object sender, RoutedEventArgs e)
         {
+            UpdatedSettings.UseCustomWindowSize = RadioCustomSize.IsChecked == true;
+            if (int.TryParse(TxtCustomWidth.Text, out int cw) && cw > 50)
+            {
+                UpdatedSettings.CustomWindowWidth = cw;
+            }
+            if (int.TryParse(TxtCustomHeight.Text, out int ch) && ch > 50)
+            {
+                UpdatedSettings.CustomWindowHeight = ch;
+            }
+
             UpdatedSettings.UseFullScreen = RadioFullScreen.IsChecked == true;
 
             int.TryParse(TxtMarginTop.Text, out int mTop);

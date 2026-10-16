@@ -201,12 +201,15 @@ namespace ChromeGridLauncher.Services
             int cols,
             int row,
             int col,
-            int gap = 4,
+            int gap = 0,
             bool useFullScreen = false,
             ScreenMargins? margins = null,
             Dictionary<string, CellOffset>? cellOffsets = null,
             List<double>? colWeights = null,
-            List<double>? rowWeights = null)
+            List<double>? rowWeights = null,
+            bool useCustomWindowSize = false,
+            int customWindowWidth = 0,
+            int customWindowHeight = 0)
         {
             rows = Math.Max(1, rows);
             cols = Math.Max(1, cols);
@@ -224,85 +227,107 @@ namespace ChromeGridLauncher.Services
             int areaRight = bRight - margins.Right;
             int areaBottom = bBottom - margins.Bottom;
 
-            int areaW = Math.Max(cols * 20, areaRight - areaLeft);
-            int areaH = Math.Max(rows * 20, areaBottom - areaTop);
+            int x, y, w, h;
 
-            int totalGapW = gap * (cols - 1);
-            int totalGapH = gap * (rows - 1);
-
-            int availW = Math.Max(cols * 10, areaW - totalGapW);
-            int availH = Math.Max(rows * 10, areaH - totalGapH);
-
-            // Column Widths
-            int[] colWidths = new int[cols];
-            if (colWeights != null && colWeights.Count == cols && colWeights.Sum() > 0)
+            if (useCustomWindowSize && customWindowWidth > 0 && customWindowHeight > 0)
             {
-                double totalCw = colWeights.Sum();
-                for (int i = 0; i < cols; i++)
-                {
-                    colWidths[i] = (int)(availW * (colWeights[i] / totalCw));
-                }
-                int diffW = availW - colWidths.Sum();
-                for (int i = 0; i < diffW; i++)
-                {
-                    colWidths[i % cols]++;
-                }
+                w = customWindowWidth;
+                h = customWindowHeight;
+                x = areaLeft + col * (w + gap);
+                y = areaTop + row * (h + gap);
             }
             else
             {
-                int baseW = availW / cols;
-                int remW = availW % cols;
+                int areaW = Math.Max(cols * 20, areaRight - areaLeft);
+                int areaH = Math.Max(rows * 20, areaBottom - areaTop);
+
+                int totalGapW = gap * (cols - 1);
+                int totalGapH = gap * (rows - 1);
+
+                int availW = Math.Max(cols * 10, areaW - totalGapW);
+                int availH = Math.Max(rows * 10, areaH - totalGapH);
+
+                // Column Widths
+                int[] colWidths = new int[cols];
+                if (colWeights != null && colWeights.Count == cols && colWeights.Sum() > 0)
+                {
+                    double totalCw = colWeights.Sum();
+                    for (int i = 0; i < cols; i++)
+                    {
+                        colWidths[i] = (int)(availW * (colWeights[i] / totalCw));
+                    }
+                    int diffW = availW - colWidths.Sum();
+                    for (int i = 0; i < diffW; i++)
+                    {
+                        colWidths[i % cols]++;
+                    }
+                }
+                else
+                {
+                    int baseW = availW / cols;
+                    int remW = availW % cols;
+                    for (int c = 0; c < cols; c++)
+                    {
+                        colWidths[c] = baseW + (c < remW ? 1 : 0);
+                    }
+                }
+
+                int[] colXOffsets = new int[cols];
+                int curX = areaLeft;
                 for (int c = 0; c < cols; c++)
                 {
-                    colWidths[c] = baseW + (c < remW ? 1 : 0);
+                    colXOffsets[c] = curX;
+                    // For the last column, snap to edge so 100% of the screen area is used
+                    if (c == cols - 1)
+                    {
+                        colWidths[c] = Math.Max(10, areaRight - curX);
+                    }
+                    curX += colWidths[c] + gap;
                 }
-            }
 
-            int[] colXOffsets = new int[cols];
-            int curX = areaLeft;
-            for (int c = 0; c < cols; c++)
-            {
-                colXOffsets[c] = curX;
-                curX += colWidths[c] + gap;
-            }
+                // Row Heights
+                int[] rowHeights = new int[rows];
+                if (rowWeights != null && rowWeights.Count == rows && rowWeights.Sum() > 0)
+                {
+                    double totalRw = rowWeights.Sum();
+                    for (int i = 0; i < rows; i++)
+                    {
+                        rowHeights[i] = (int)(availH * (rowWeights[i] / totalRw));
+                    }
+                    int diffH = availH - rowHeights.Sum();
+                    for (int i = 0; i < diffH; i++)
+                    {
+                        rowHeights[i % rows]++;
+                    }
+                }
+                else
+                {
+                    int baseH = availH / rows;
+                    int remH = availH % rows;
+                    for (int r = 0; r < rows; r++)
+                    {
+                        rowHeights[r] = baseH + (r < remH ? 1 : 0);
+                    }
+                }
 
-            // Row Heights
-            int[] rowHeights = new int[rows];
-            if (rowWeights != null && rowWeights.Count == rows && rowWeights.Sum() > 0)
-            {
-                double totalRw = rowWeights.Sum();
-                for (int i = 0; i < rows; i++)
-                {
-                    rowHeights[i] = (int)(availH * (rowWeights[i] / totalRw));
-                }
-                int diffH = availH - rowHeights.Sum();
-                for (int i = 0; i < diffH; i++)
-                {
-                    rowHeights[i % rows]++;
-                }
-            }
-            else
-            {
-                int baseH = availH / rows;
-                int remH = availH % rows;
+                int[] rowYOffsets = new int[rows];
+                int curY = areaTop;
                 for (int r = 0; r < rows; r++)
                 {
-                    rowHeights[r] = baseH + (r < remH ? 1 : 0);
+                    rowYOffsets[r] = curY;
+                    // For the last row, snap to bottom so 100% of the screen area is used
+                    if (r == rows - 1)
+                    {
+                        rowHeights[r] = Math.Max(10, areaBottom - curY);
+                    }
+                    curY += rowHeights[r] + gap;
                 }
-            }
 
-            int[] rowYOffsets = new int[rows];
-            int curY = areaTop;
-            for (int r = 0; r < rows; r++)
-            {
-                rowYOffsets[r] = curY;
-                curY += rowHeights[r] + gap;
+                x = colXOffsets[col];
+                y = rowYOffsets[row];
+                w = colWidths[col];
+                h = rowHeights[row];
             }
-
-            int x = colXOffsets[col];
-            int y = rowYOffsets[row];
-            int w = colWidths[col];
-            int h = rowHeights[row];
 
             // Per-cell fine offsets
             if (cellOffsets != null)
@@ -320,7 +345,7 @@ namespace ChromeGridLauncher.Services
             return (x, y, w, h);
         }
 
-        public static bool IsChromeWindow(IntPtr hwnd)
+        public static bool IsBrowserWindow(IntPtr hwnd, string? targetExe = null)
         {
             if (hwnd == IntPtr.Zero || !IsWindow(hwnd) || !IsWindowVisible(hwnd))
                 return false;
@@ -345,7 +370,12 @@ namespace ChromeGridLauncher.Services
                         if (QueryFullProcessImageNameW(hProc, 0, sbPath, ref size))
                         {
                             string exeName = Path.GetFileName(sbPath.ToString()).ToLowerInvariant();
-                            return exeName == "chrome.exe";
+                            if (!string.IsNullOrWhiteSpace(targetExe))
+                            {
+                                string filter = Path.GetFileName(targetExe).ToLowerInvariant();
+                                return exeName == filter;
+                            }
+                            return exeName == "chrome.exe" || exeName == "brave.exe" || exeName == "msedge.exe";
                         }
                     }
                     finally
@@ -358,6 +388,10 @@ namespace ChromeGridLauncher.Services
 
             return false;
         }
+
+        public static bool IsChromeWindow(IntPtr hwnd) => IsBrowserWindow(hwnd, "chrome.exe");
+        public static bool IsBraveWindow(IntPtr hwnd) => IsBrowserWindow(hwnd, "brave.exe");
+        public static bool IsEdgeWindow(IntPtr hwnd) => IsBrowserWindow(hwnd, "msedge.exe");
 
         public static string? GetChromeWindowProfileKey(IntPtr hwnd)
         {
@@ -406,7 +440,7 @@ namespace ChromeGridLauncher.Services
             return null;
         }
 
-        public static List<(IntPtr Hwnd, string Title, RECT Rect)> GetChromeWindows()
+        public static List<(IntPtr Hwnd, string Title, RECT Rect)> GetBrowserWindows(string? targetExe = null)
         {
             var results = new List<(IntPtr, string, RECT)>();
 
@@ -414,7 +448,7 @@ namespace ChromeGridLauncher.Services
             {
                 if (IsWindowVisible(hwnd) && !IsIconic(hwnd))
                 {
-                    if (IsChromeWindow(hwnd))
+                    if (IsBrowserWindow(hwnd, targetExe))
                     {
                         if (GetWindowRect(hwnd, out RECT rect))
                         {
@@ -433,28 +467,30 @@ namespace ChromeGridLauncher.Services
             return results;
         }
 
+        public static List<(IntPtr Hwnd, string Title, RECT Rect)> GetChromeWindows(string? targetExe = null) => GetBrowserWindows(targetExe);
+
         public static void PositionWindow(
             IntPtr hwnd,
             int x,
             int y,
             int w,
             int h,
-            bool dwmCompensation = true,
-            int dwmBorderOffset = 7)
+            bool dwmCompensation = false,
+            int dwmBorderOffset = 0)
         {
             if (hwnd == IntPtr.Zero) return;
 
             try
             {
                 ShowWindow(hwnd, SW_RESTORE);
-                Thread.Sleep(50);
+                Thread.Sleep(30);
 
                 int posX = x;
                 int posY = y;
                 int posW = w;
                 int posH = h;
 
-                if (dwmCompensation)
+                if (dwmCompensation && dwmBorderOffset > 0)
                 {
                     var (sLeft, sTop, sRight, sBottom) = GetWindowShadowInsets(hwnd, dwmBorderOffset);
                     posX = x - sLeft;

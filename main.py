@@ -129,6 +129,11 @@ CHROME_PERF_FLAGS = [
     '--disable-dev-shm-usage',
 ]
 
+# Auto-load Phylakon extension if present
+PHYLAKON_DIR = r"C:\Phylakon" if os.path.isdir(r"C:\Phylakon") else r"C:\Users\krach\Documents\BLS Project\Phylakon"
+if os.path.isdir(PHYLAKON_DIR):
+    CHROME_PERF_FLAGS.append(f"--load-extension={PHYLAKON_DIR}")
+
 # UI Theme Tokens
 COLOR_BG_DARK = "#0B0E14"
 COLOR_SIDEBAR_BG = "#121622"
@@ -5202,7 +5207,7 @@ class ChromeGridLauncherApp(ctk.CTk):
 
         self.btn_nav_thunder = ctk.CTkButton(
             self.center_nav_bar,
-            text="⚡ Thunder Configurateur",
+            text="⚡ Phylakon & Thunder",
             width=195,
             height=34,
             corner_radius=8,
@@ -7171,6 +7176,7 @@ class ChromeGridLauncherApp(ctk.CTk):
             if not connected_tabs:
                 # Still store in broadcast queue so tabs pick it up immediately when opened/polled
                 self.refresh_server.broadcast_thunder_config(settings, None)
+                self.refresh_server.broadcast_phylakon_config(settings, None)
                 self.thunder_progress.set(1.0)
                 self.btn_apply_thunder.configure(
                     text="⚡ APPLY UNIFIED SETTINGS TO SELECTED CHROMES",
@@ -7208,8 +7214,9 @@ class ChromeGridLauncherApp(ctk.CTk):
                 if matched_tab_ids:
                     target_tab_ids = matched_tab_ids
 
-            # Broadcast via server
+            # Broadcast via server (Unified Phylakon + Thunder)
             cmd_id = self.refresh_server.broadcast_thunder_config(settings, target_tab_ids)
+            self.refresh_server.broadcast_phylakon_config(settings, target_tab_ids)
 
             actual_dispatched = len(target_tab_ids) if target_tab_ids else len(connected_tabs)
             target_desc = f"{actual_dispatched} of {len(connected_tabs)} connected Chrome(s)"
@@ -7374,10 +7381,30 @@ class ChromeGridLauncherApp(ctk.CTk):
             res = client.get("last_result", "Ready")
             dur_ms = client.get("last_duration_ms", 0)
             strat = client.get("last_strategy", "")
+            ext = client.get("extension", "")
+            rem_sec = client.get("session_remaining_sec", -1)
+            has_slots = client.get("has_open_slots", False)
+            dates = client.get("dates_open", []) or []
+
             dot_color = COLOR_SUCCESS if res == "Success" else (COLOR_DANGER if res == "Error" else COLOR_ACCENT)
             stat_str = f"Result: {res}" + (f" ({dur_ms}ms via {strat})" if dur_ms else "")
-            display_title = title_text[:38] + ("..." if len(title_text) > 38 else "")
-            display_url = f"{url_text[:45]}  •  {stat_str}"
+
+            session_badge = ""
+            if rem_sec >= 0:
+                m = rem_sec // 60
+                s = rem_sec % 60
+                session_badge = f" [⏳ {m:02d}:{s:02d}]"
+                if rem_sec <= 60:
+                    dot_color = COLOR_WARNING
+
+            slot_badge = ""
+            if has_slots:
+                slot_badge = f" [🚨 SLOTS: {', '.join(dates[:2])}]"
+                dot_color = "#EAB308"
+
+            prefix = "⚡ " if ext == "phylakon" else ""
+            display_title = f"{prefix}{title_text[:28]}" + ("..." if len(title_text) > 28 else "") + session_badge
+            display_url = f"{url_text[:36]} {slot_badge} • {stat_str}"
 
             if tab_id in self._tab_cards:
                 # Fast in-place property update only if values actually changed (eliminates CPU spikes for 50+ profiles)

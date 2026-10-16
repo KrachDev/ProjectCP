@@ -21,6 +21,7 @@ namespace ChromeGridLauncher.Models
     public class AppSettings
     {
         public string Theme { get; set; } = "Dark";
+        public string SelectedBrowser { get; set; } = "Chrome";
         public int MonitorIndex { get; set; } = 0;
         public int CellGap { get; set; } = 0;
         public double WindowTimeout { get; set; } = 8.0;
@@ -29,11 +30,19 @@ namespace ChromeGridLauncher.Models
         public int CustomRows { get; set; } = 2;
         public int CustomCols { get; set; } = 2;
         public string ChromePathOverride { get; set; } = string.Empty;
+        public string BravePathOverride { get; set; } = string.Empty;
+        public string EdgePathOverride { get; set; } = string.Empty;
+        public string ChromeUserDataOverride { get; set; } = string.Empty;
+        public string BraveUserDataOverride { get; set; } = string.Empty;
+        public string EdgeUserDataOverride { get; set; } = string.Empty;
         public string ProtectedProfileKey { get; set; } = "Default";
         public bool UseFullScreen { get; set; } = false;
+        public bool UseCustomWindowSize { get; set; } = false;
+        public int CustomWindowWidth { get; set; } = 960;
+        public int CustomWindowHeight { get; set; } = 540;
         public ScreenMargins ScreenMargins { get; set; } = new();
-        public bool DwmCompensation { get; set; } = true;
-        public int DwmBorderOffset { get; set; } = 7;
+        public bool DwmCompensation { get; set; } = false;
+        public int DwmBorderOffset { get; set; } = 0;
         public Dictionary<string, CellOffset> CellOffsets { get; set; } = new();
         public List<double> ColWeights { get; set; } = new();
         public List<double> RowWeights { get; set; } = new();

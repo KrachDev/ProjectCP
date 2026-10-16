@@ -268,6 +268,109 @@ namespace ChromeGridLauncher.ViewModels
 
         public string ScreenModeText => UseFullScreen ? "📺 Full Screen" : "🖥️ Work Area";
 
+        public bool UseCustomWindowSize
+        {
+            get => _settings.UseCustomWindowSize;
+            set
+            {
+                if (_settings.UseCustomWindowSize != value)
+                {
+                    _settings.UseCustomWindowSize = value;
+                    _storageService.SaveSettings(_settings);
+                    OnPropertyChanged(nameof(UseCustomWindowSize));
+                    OnPropertyChanged(nameof(IsAutoFitActive));
+                    OnPropertyChanged(nameof(IsManualSizeActive));
+                    OnPropertyChanged(nameof(WindowSizeModeText));
+                    OnPropertyChanged(nameof(CurrentCellResolutionText));
+                    UpdateCellResolutions();
+                }
+            }
+        }
+
+        public bool IsAutoFitActive => !_settings.UseCustomWindowSize;
+        public bool IsManualSizeActive => _settings.UseCustomWindowSize;
+
+        public int CustomWindowWidth
+        {
+            get => _settings.CustomWindowWidth <= 0 ? 960 : _settings.CustomWindowWidth;
+            set
+            {
+                int val = Math.Clamp(value, 200, 7680);
+                if (_settings.CustomWindowWidth != val)
+                {
+                    _settings.CustomWindowWidth = val;
+                    _storageService.SaveSettings(_settings);
+                    OnPropertyChanged(nameof(CustomWindowWidth));
+                    OnPropertyChanged(nameof(CustomWindowWidthText));
+                    OnPropertyChanged(nameof(WindowSizeModeText));
+                    OnPropertyChanged(nameof(CurrentCellResolutionText));
+                    UpdateCellResolutions();
+                }
+            }
+        }
+
+        public string CustomWindowWidthText
+        {
+            get => CustomWindowWidth.ToString();
+            set
+            {
+                if (int.TryParse(value, out int parsed))
+                {
+                    CustomWindowWidth = parsed;
+                }
+            }
+        }
+
+        public int CustomWindowHeight
+        {
+            get => _settings.CustomWindowHeight <= 0 ? 540 : _settings.CustomWindowHeight;
+            set
+            {
+                int val = Math.Clamp(value, 150, 4320);
+                if (_settings.CustomWindowHeight != val)
+                {
+                    _settings.CustomWindowHeight = val;
+                    _storageService.SaveSettings(_settings);
+                    OnPropertyChanged(nameof(CustomWindowHeight));
+                    OnPropertyChanged(nameof(CustomWindowHeightText));
+                    OnPropertyChanged(nameof(WindowSizeModeText));
+                    OnPropertyChanged(nameof(CurrentCellResolutionText));
+                    UpdateCellResolutions();
+                }
+            }
+        }
+
+        public string CustomWindowHeightText
+        {
+            get => CustomWindowHeight.ToString();
+            set
+            {
+                if (int.TryParse(value, out int parsed))
+                {
+                    CustomWindowHeight = parsed;
+                }
+            }
+        }
+
+        public string WindowSizeModeText => UseCustomWindowSize ? $"Manual ({CustomWindowWidth}×{CustomWindowHeight})" : "Auto-Fit Screen";
+
+        public string CurrentCellResolutionText
+        {
+            get
+            {
+                if (UseCustomWindowSize)
+                {
+                    return $"{CustomWindowWidth}×{CustomWindowHeight} px (Manual)";
+                }
+                var first = GridCells.FirstOrDefault();
+                if (first != null && first.CellWidth > 0 && first.CellHeight > 0)
+                {
+                    return $"{first.CellWidth}×{first.CellHeight} px (100% Screen)";
+                }
+                return "Auto-Fit";
+            }
+        }
+
         public string StatusMessage
         {
             get => _statusMessage;
@@ -305,6 +408,105 @@ namespace ChromeGridLauncher.ViewModels
         public string ProfileCountText => $"{_allProfiles.Count} profiles detected";
         public string ServerPillText => _wsServer.IsRunning ? $"🟢 ws://127.0.0.1:{_wsServer.Port} ({ConnectedTabs.Count} tabs)" : "🔴 Server: Stopped";
         public string ServerPillColor => _wsServer.IsRunning ? "#10B981" : "#EF4444";
+
+        #endregion
+
+        #region Browser Configuration Properties
+
+        public ObservableCollection<BrowserOption> AvailableBrowsers { get; } = new()
+        {
+            new BrowserOption { Key = "Chrome", DisplayName = "🌐 Chrome", ShortName = "Chrome", ExeFileName = "chrome.exe", ProcessName = "chrome" },
+            new BrowserOption { Key = "Brave", DisplayName = "🦁 Brave", ShortName = "Brave", ExeFileName = "brave.exe", ProcessName = "brave" },
+            new BrowserOption { Key = "Edge", DisplayName = "🌊 Edge", ShortName = "Edge", ExeFileName = "msedge.exe", ProcessName = "msedge" }
+        };
+
+        private BrowserOption _selectedBrowserOption = null!;
+
+        public BrowserOption SelectedBrowserOption
+        {
+            get => _selectedBrowserOption ?? AvailableBrowsers[0];
+            set
+            {
+                if (value != null && SetProperty(ref _selectedBrowserOption, value))
+                {
+                    _settings.SelectedBrowser = value.Key;
+                    _storageService.SaveSettings(_settings);
+                    NotifyBrowserChanged();
+                    ExecuteScanProfiles();
+                }
+            }
+        }
+
+        public string SelectedBrowser
+        {
+            get => SelectedBrowserOption?.Key ?? _settings.SelectedBrowser ?? "Chrome";
+            set
+            {
+                var match = AvailableBrowsers.FirstOrDefault(b => string.Equals(b.Key, value, StringComparison.OrdinalIgnoreCase));
+                if (match != null && match != _selectedBrowserOption)
+                {
+                    SelectedBrowserOption = match;
+                }
+            }
+        }
+
+        public bool IsBraveSelected => string.Equals(SelectedBrowserOption?.Key, "Brave", StringComparison.OrdinalIgnoreCase);
+        public bool IsEdgeSelected => string.Equals(SelectedBrowserOption?.Key, "Edge", StringComparison.OrdinalIgnoreCase);
+        public bool IsChromeSelected => !IsBraveSelected && !IsEdgeSelected;
+
+        public string CurrentBrowserName => SelectedBrowserOption?.ShortName ?? "Chrome";
+        public string CurrentBrowserExeName => SelectedBrowserOption?.ExeFileName ?? "chrome.exe";
+
+        public string CloseBrowserButtonText => $"🛑 Close All {CurrentBrowserName}";
+        public string CloseBrowserTooltip => $"Safely terminate managed {CurrentBrowserName} profiles (Leaves protected profile running)";
+        public string TileBrowserTooltip => $"Align all opened {CurrentBrowserName} windows into active grid layout";
+        public string HardRefreshTooltip => $"Force hard reload (bypasses cache) across all active {CurrentBrowserName} windows at once (requires confirmation)";
+        public string ProfilesHeaderTitle => $"{CurrentBrowserName} Profiles";
+        public string AppBrandTitle => $"⚡ {CurrentBrowserName} Grid";
+        public string OpenExtensionsPageButtonText => $"🌐 Open {CurrentBrowserName.ToLower()}://extensions";
+        public string OpenExtensionsPageTooltip => $"Launch {CurrentBrowserName} directly to {CurrentBrowserName.ToLower()}://extensions page";
+
+        private void NotifyBrowserChanged()
+        {
+            OnPropertyChanged(nameof(SelectedBrowser));
+            OnPropertyChanged(nameof(SelectedBrowserOption));
+            OnPropertyChanged(nameof(IsBraveSelected));
+            OnPropertyChanged(nameof(IsEdgeSelected));
+            OnPropertyChanged(nameof(IsChromeSelected));
+            OnPropertyChanged(nameof(CurrentBrowserName));
+            OnPropertyChanged(nameof(CurrentBrowserExeName));
+            OnPropertyChanged(nameof(CloseBrowserButtonText));
+            OnPropertyChanged(nameof(CloseBrowserTooltip));
+            OnPropertyChanged(nameof(TileBrowserTooltip));
+            OnPropertyChanged(nameof(HardRefreshTooltip));
+            OnPropertyChanged(nameof(LaunchButtonText));
+            OnPropertyChanged(nameof(ProfilesHeaderTitle));
+            OnPropertyChanged(nameof(AppBrandTitle));
+            OnPropertyChanged(nameof(OpenExtensionsPageButtonText));
+            OnPropertyChanged(nameof(OpenExtensionsPageTooltip));
+        }
+
+        public string GetCurrentBrowserExecutable()
+        {
+            if (IsBraveSelected)
+            {
+                if (!string.IsNullOrWhiteSpace(_settings.BravePathOverride) && File.Exists(_settings.BravePathOverride))
+                    return _settings.BravePathOverride;
+                return ChromeProfileScanner.FindBraveExecutable();
+            }
+            else if (IsEdgeSelected)
+            {
+                if (!string.IsNullOrWhiteSpace(_settings.EdgePathOverride) && File.Exists(_settings.EdgePathOverride))
+                    return _settings.EdgePathOverride;
+                return ChromeProfileScanner.FindEdgeExecutable();
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(_settings.ChromePathOverride) && File.Exists(_settings.ChromePathOverride))
+                    return _settings.ChromePathOverride;
+                return ChromeProfileScanner.FindChromeExecutable();
+            }
+        }
 
         #endregion
 
@@ -515,11 +717,18 @@ namespace ChromeGridLauncher.ViewModels
         public ICommand SetGridPresetCommand { get; private set; } = null!;
         public ICommand SetGapCommand { get; private set; } = null!;
         public ICommand ToggleScreenModeCommand { get; private set; } = null!;
+        public ICommand ToggleCustomSizeModeCommand { get; private set; } = null!;
+        public ICommand SetAutoFitModeCommand { get; private set; } = null!;
+        public ICommand SetManualSizeModeCommand { get; private set; } = null!;
+        public ICommand NudgeWidthCommand { get; private set; } = null!;
+        public ICommand NudgeHeightCommand { get; private set; } = null!;
+        public ICommand ResetAutoFitCommand { get; private set; } = null!;
         public ICommand AutoPopulateGridCommand { get; private set; } = null!;
         public ICommand ClearGridCommand { get; private set; } = null!;
         public ICommand LaunchAllCommand { get; private set; } = null!;
         public ICommand TileWindowsCommand { get; private set; } = null!;
-        public ICommand CloseManagedChromeCommand { get; private set; } = null!;
+        public ICommand CloseManagedChromeCommand => CloseManagedBrowserCommand;
+        public ICommand CloseManagedBrowserCommand { get; private set; } = null!;
         public ICommand RefreshProfilesCommand { get; private set; } = null!;
         public ICommand ToggleProtectProfileCommand { get; private set; } = null!;
         public ICommand SelectProfileForPlacementCommand { get; private set; } = null!;
@@ -604,11 +813,54 @@ namespace ChromeGridLauncher.ViewModels
             });
 
             ToggleScreenModeCommand = new RelayCommand(() => UseFullScreen = !UseFullScreen);
+
+            ToggleCustomSizeModeCommand = new RelayCommand(() =>
+            {
+                UseCustomWindowSize = !UseCustomWindowSize;
+                StatusMessage = UseCustomWindowSize ? $"Switched to Manual Size: {CustomWindowWidth}×{CustomWindowHeight} px" : "Switched to Auto-Fit Grid (fills 100% display)";
+            });
+
+            SetAutoFitModeCommand = new RelayCommand(() =>
+            {
+                UseCustomWindowSize = false;
+                StatusMessage = "Switched to Auto-Fit Grid (fills 100% display)";
+            });
+
+            SetManualSizeModeCommand = new RelayCommand(() =>
+            {
+                UseCustomWindowSize = true;
+                StatusMessage = $"Switched to Manual Size: {CustomWindowWidth}×{CustomWindowHeight} px";
+            });
+
+            NudgeWidthCommand = new RelayCommand(p =>
+            {
+                int delta = 20;
+                if (p != null && int.TryParse(p.ToString(), out int parsed)) delta = parsed;
+                CustomWindowWidth = Math.Clamp(CustomWindowWidth + delta, 200, 7680);
+                UseCustomWindowSize = true;
+                StatusMessage = $"Window Width set to {CustomWindowWidth} px";
+            });
+
+            NudgeHeightCommand = new RelayCommand(p =>
+            {
+                int delta = 20;
+                if (p != null && int.TryParse(p.ToString(), out int parsed)) delta = parsed;
+                CustomWindowHeight = Math.Clamp(CustomWindowHeight + delta, 150, 4320);
+                UseCustomWindowSize = true;
+                StatusMessage = $"Window Height set to {CustomWindowHeight} px";
+            });
+
+            ResetAutoFitCommand = new RelayCommand(() =>
+            {
+                UseCustomWindowSize = false;
+                StatusMessage = "Reset to Auto-Fit Grid (100% display coverage)";
+            });
+
             AutoPopulateGridCommand = new RelayCommand(ExecuteAutoPopulate);
             ClearGridCommand = new RelayCommand(ExecuteClearGrid);
             LaunchAllCommand = new RelayCommand(ExecuteLaunchAll);
             TileWindowsCommand = new RelayCommand(ExecuteTileWindows);
-            CloseManagedChromeCommand = new RelayCommand(ExecuteCloseManagedChrome);
+            CloseManagedBrowserCommand = new RelayCommand(ExecuteCloseManagedChrome);
             RefreshProfilesCommand = new RelayCommand(ExecuteScanProfiles);
 
             ToggleProtectProfileCommand = new RelayCommand(p =>
@@ -784,6 +1036,11 @@ namespace ChromeGridLauncher.ViewModels
             ProfileGroups = new ObservableCollection<ProfileGroup>(groupsList);
             SelectedGroupFilter = ProfileGroups[0];
 
+            // Initialize browser option from settings
+            var foundBrowser = AvailableBrowsers.FirstOrDefault(b => string.Equals(b.Key, _settings.SelectedBrowser, StringComparison.OrdinalIgnoreCase));
+            _selectedBrowserOption = foundBrowser ?? AvailableBrowsers[0];
+            NotifyBrowserChanged();
+
             // Scan profiles
             ExecuteScanProfiles();
 
@@ -835,8 +1092,10 @@ namespace ChromeGridLauncher.ViewModels
 
         private void ExecuteScanProfiles()
         {
-            string? overridePath = !string.IsNullOrWhiteSpace(_settings.ChromePathOverride) ? _settings.ChromePathOverride : null;
-            var scanned = _profileScanner.ScanProfiles(overridePath);
+            string? customUserData = IsBraveSelected
+                ? _settings.BraveUserDataOverride
+                : (IsEdgeSelected ? _settings.EdgeUserDataOverride : _settings.ChromeUserDataOverride);
+            var scanned = _profileScanner.ScanProfiles(customUserData, SelectedBrowser);
             ChromeProfileScanner.ApplyGroupsToProfiles(scanned, _storageService.LoadCustomGroups(), _storageService.LoadOverrides());
 
             // Mark protected profile
@@ -849,7 +1108,7 @@ namespace ChromeGridLauncher.ViewModels
             _allProfiles = new ObservableCollection<ChromeProfile>(scanned);
             ApplyFilter();
             OnPropertyChanged(nameof(ProfileCountText));
-            StatusMessage = $"Detected {_allProfiles.Count} Chrome profiles.";
+            StatusMessage = $"Detected {_allProfiles.Count} {CurrentBrowserName} profiles.";
         }
 
         private void ApplyFilter()
@@ -1004,12 +1263,16 @@ namespace ChromeGridLauncher.ViewModels
                     margins: _settings.ScreenMargins,
                     cellOffsets: _settings.CellOffsets,
                     colWeights: _settings.ColWeights,
-                    rowWeights: _settings.RowWeights
+                    rowWeights: _settings.RowWeights,
+                    useCustomWindowSize: UseCustomWindowSize,
+                    customWindowWidth: CustomWindowWidth,
+                    customWindowHeight: CustomWindowHeight
                 );
 
                 cell.CellWidth = w;
                 cell.CellHeight = h;
             }
+            OnPropertyChanged(nameof(CurrentCellResolutionText));
         }
 
         #endregion
@@ -1079,13 +1342,11 @@ namespace ChromeGridLauncher.ViewModels
                 return;
             }
 
-            string chromeExe = !string.IsNullOrWhiteSpace(_settings.ChromePathOverride) && File.Exists(_settings.ChromePathOverride)
-                ? _settings.ChromePathOverride
-                : ChromeProfileScanner.FindChromeExecutable();
+            string browserExe = GetCurrentBrowserExecutable();
 
-            if (!File.Exists(chromeExe))
+            if (!File.Exists(browserExe))
             {
-                StatusMessage = "Chrome executable not found! Configure Chrome path in Settings (⚙️).";
+                StatusMessage = $"{CurrentBrowserName} executable not found! Configure {CurrentBrowserName} path in Settings (⚙️).";
                 return;
             }
 
@@ -1124,11 +1385,14 @@ namespace ChromeGridLauncher.ViewModels
                         margins: _settings.ScreenMargins,
                         cellOffsets: _settings.CellOffsets,
                         colWeights: _settings.ColWeights,
-                        rowWeights: _settings.RowWeights
+                        rowWeights: _settings.RowWeights,
+                        useCustomWindowSize: UseCustomWindowSize,
+                        customWindowWidth: CustomWindowWidth,
+                        customWindowHeight: CustomWindowHeight
                     );
 
                     IntPtr hwnd = ChromeLauncher.LaunchAndPosition(
-                        chromeExe: chromeExe,
+                        chromeExe: browserExe,
                         profileKey: prof.Key,
                         x: x,
                         y: y,
@@ -1139,7 +1403,8 @@ namespace ChromeGridLauncher.ViewModels
                         dwmCompensation: _settings.DwmCompensation,
                         dwmBorderOffset: _settings.DwmBorderOffset,
                         alreadyManagedHwnds: _managedHwnds,
-                        enableNativeExtension: _settings.EnableNativeExtension
+                        enableNativeExtension: _settings.EnableNativeExtension,
+                        targetExeName: CurrentBrowserExeName
                     );
 
                     if (hwnd != IntPtr.Zero)
@@ -1163,7 +1428,7 @@ namespace ChromeGridLauncher.ViewModels
 
             IsLaunching = false;
             LaunchProgress = 1.0;
-            StatusMessage = $"Completed! Positioned {successCount} of {total} Chrome profile window(s) to grid.";
+            StatusMessage = $"Completed! Positioned {successCount} of {total} {CurrentBrowserName} profile window(s) to grid.";
 
             _ = Task.Delay(4000).ContinueWith(_ =>
             {
@@ -1175,10 +1440,10 @@ namespace ChromeGridLauncher.ViewModels
         {
             if (SelectedMonitor == null) return;
 
-            var activeWindows = WindowPlacementService.GetChromeWindows();
+            var activeWindows = WindowPlacementService.GetBrowserWindows(CurrentBrowserExeName);
             if (activeWindows.Count == 0)
             {
-                StatusMessage = "No active Chrome windows found to tile.";
+                StatusMessage = $"No active {CurrentBrowserName} windows found to tile.";
                 return;
             }
 
@@ -1202,7 +1467,10 @@ namespace ChromeGridLauncher.ViewModels
                     margins: _settings.ScreenMargins,
                     cellOffsets: _settings.CellOffsets,
                     colWeights: _settings.ColWeights,
-                    rowWeights: _settings.RowWeights
+                    rowWeights: _settings.RowWeights,
+                    useCustomWindowSize: UseCustomWindowSize,
+                    customWindowWidth: CustomWindowWidth,
+                    customWindowHeight: CustomWindowHeight
                 );
 
                 WindowPlacementService.PositionWindow(
@@ -1214,7 +1482,7 @@ namespace ChromeGridLauncher.ViewModels
                 _managedHwnds.Add(hwnd);
             }
 
-            StatusMessage = $"Tiled {count} active Chrome window(s) onto {SelectedMonitor.DisplayLabel}.";
+            StatusMessage = $"Tiled {count} active {CurrentBrowserName} window(s) onto {SelectedMonitor.DisplayLabel}.";
         }
 
         private void ExecuteCloseManagedChrome()
@@ -1223,14 +1491,14 @@ namespace ChromeGridLauncher.ViewModels
             var protProf = _allProfiles.FirstOrDefault(p => string.Equals(p.Key, protKey, StringComparison.OrdinalIgnoreCase));
             string protName = protProf?.DisplayName ?? "";
 
-            int closed = ChromeLauncher.CloseManagedWindows(_managedHwnds, protKey, protName);
+            int closed = ChromeLauncher.CloseManagedWindows(_managedHwnds, protKey, protName, CurrentBrowserExeName);
 
             foreach (var cell in GridCells)
             {
                 cell.StatusText = string.Empty;
             }
 
-            StatusMessage = $"Closed {closed} Chrome window(s) cleanly. Protected profile '{(!string.IsNullOrWhiteSpace(protName) ? protName : protKey)}' remained untouched.";
+            StatusMessage = $"Closed {closed} {CurrentBrowserName} window(s) cleanly. Protected profile '{(!string.IsNullOrWhiteSpace(protName) ? protName : protKey)}' remained untouched.";
         }
 
         private void ExecuteToggleProtect(ChromeProfile profile)
@@ -1627,8 +1895,8 @@ namespace ChromeGridLauncher.ViewModels
         private void ExecuteHardRefreshAll()
         {
             var confirm = MessageBox.Show(
-                "Are you sure you want to hard refresh all Chrome pages at once?\n\nThis will trigger an immediate full reload across all active Chrome windows.",
-                "Confirm Hard Refresh All",
+                $"Are you sure you want to hard refresh all {CurrentBrowserName} pages at once?\n\nThis will trigger an immediate full reload across all active {CurrentBrowserName} windows.",
+                $"Confirm Hard Refresh All ({CurrentBrowserName})",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
 
@@ -1638,8 +1906,8 @@ namespace ChromeGridLauncher.ViewModels
             _wsServer.BroadcastHardReload(StaggerMs);
             OnPropertyChanged(nameof(TotalBroadcastsCount));
 
-            // 2. Win32 F5 post to all managed and active Chrome windows
-            var activeWindows = WindowPlacementService.GetChromeWindows();
+            // 2. Win32 F5 post to all managed and active browser windows
+            var activeWindows = WindowPlacementService.GetBrowserWindows(CurrentBrowserExeName);
             var targetHwnds = new HashSet<IntPtr>(_managedHwnds);
             foreach (var (h, _, _) in activeWindows)
             {
@@ -1655,7 +1923,7 @@ namespace ChromeGridLauncher.ViewModels
                 }
             }
 
-            StatusMessage = $"🔄 Hard Refresh executed across {_wsServer.GetClientsSnapshot().Count} connected tab(s) and {count} Chrome window(s).";
+            StatusMessage = $"🔄 Hard Refresh executed across {_wsServer.GetClientsSnapshot().Count} connected tab(s) and {count} {CurrentBrowserName} window(s).";
         }
 
         private void ExecuteToggleServer()
@@ -1734,9 +2002,7 @@ namespace ChromeGridLauncher.ViewModels
             var targets = GridCells.Where(c => c.AssignedProfile != null).Select(c => c.AssignedProfile!).DistinctBy(p => p.Key).ToList();
             if (targets.Count == 0) targets = _allProfiles.ToList();
 
-            string chromeExe = !string.IsNullOrWhiteSpace(_settings.ChromePathOverride) && File.Exists(_settings.ChromePathOverride)
-                ? _settings.ChromePathOverride
-                : ChromeProfileScanner.FindChromeExecutable();
+            string browserExe = GetCurrentBrowserExecutable();
 
             Task.Run(async () =>
             {
@@ -1746,7 +2012,7 @@ namespace ChromeGridLauncher.ViewModels
                     // Omission of --new-window opens as a tab in existing window without moving it
                     var psi = new ProcessStartInfo
                     {
-                        FileName = chromeExe,
+                        FileName = browserExe,
                         Arguments = $"--profile-directory=\"{p.Key}\" \"{url}\"",
                         UseShellExecute = false,
                         CreateNoWindow = true
@@ -1807,30 +2073,31 @@ namespace ChromeGridLauncher.ViewModels
 
         private void ExecuteOpenChromeExtensionsPage()
         {
-            string chromeExe = !string.IsNullOrWhiteSpace(_settings.ChromePathOverride) && File.Exists(_settings.ChromePathOverride)
-                ? _settings.ChromePathOverride
-                : ChromeProfileScanner.FindChromeExecutable();
+            string browserExe = GetCurrentBrowserExecutable();
+            string scheme = IsBraveSelected
+                ? "brave://extensions"
+                : (IsEdgeSelected ? "edge://extensions" : "chrome://extensions");
 
-            if (!string.IsNullOrWhiteSpace(chromeExe) && File.Exists(chromeExe))
+            if (!string.IsNullOrWhiteSpace(browserExe) && File.Exists(browserExe))
             {
                 try
                 {
                     Process.Start(new ProcessStartInfo
                     {
-                        FileName = chromeExe,
-                        Arguments = "chrome://extensions",
+                        FileName = browserExe,
+                        Arguments = scheme,
                         UseShellExecute = false
                     });
-                    StatusMessage = "🌐 Opened chrome://extensions in Chrome. Turn on Developer mode & click 'Load unpacked'.";
+                    StatusMessage = $"🌐 Opened {scheme} in {CurrentBrowserName}. Turn on Developer mode & click 'Load unpacked'.";
                 }
                 catch (Exception ex)
                 {
-                    StatusMessage = $"Error opening Chrome: {ex.Message}";
+                    StatusMessage = $"Error opening {CurrentBrowserName}: {ex.Message}";
                 }
             }
             else
             {
-                StatusMessage = "⚠️ Chrome executable not found. Configure in Settings (⚙️).";
+                StatusMessage = $"⚠️ {CurrentBrowserName} executable not found. Configure in Settings (⚙️).";
             }
         }
 
@@ -1876,8 +2143,17 @@ namespace ChromeGridLauncher.ViewModels
                 _storageService.SaveSettings(_settings);
                 CellGap = _settings.CellGap;
                 UseFullScreen = _settings.UseFullScreen;
+                OnPropertyChanged(nameof(UseCustomWindowSize));
+                OnPropertyChanged(nameof(IsAutoFitActive));
+                OnPropertyChanged(nameof(IsManualSizeActive));
+                OnPropertyChanged(nameof(CustomWindowWidth));
+                OnPropertyChanged(nameof(CustomWindowHeight));
+                OnPropertyChanged(nameof(CustomWindowWidthText));
+                OnPropertyChanged(nameof(CustomWindowHeightText));
+                OnPropertyChanged(nameof(WindowSizeModeText));
+                OnPropertyChanged(nameof(CurrentCellResolutionText));
                 UpdateCellResolutions();
-                StatusMessage = "Applied fine positioning & screen fit calibration.";
+                StatusMessage = "Applied fine positioning & window size calibration.";
             }
         }
 
@@ -1926,6 +2202,8 @@ namespace ChromeGridLauncher.ViewModels
                 _storageService.SaveSettings(_settings);
                 CellGap = _settings.CellGap;
                 UseFullScreen = _settings.UseFullScreen;
+                SelectedBrowser = _settings.SelectedBrowser;
+                NotifyBrowserChanged();
                 ExecuteScanProfiles();
                 UpdateCellResolutions();
                 StatusMessage = "Settings saved successfully.";

@@ -17,10 +17,32 @@ namespace ChromeGridLauncher.Services
             "#06B6D4", "#6366F1", "#14B8A6", "#F97316", "#84CC16"
         };
 
-        public static string GetDefaultUserDataPath()
+        public static string GetDefaultUserDataPath(string browser = "Chrome")
         {
             string localApp = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            return Path.Combine(localApp, "Google", "Chrome", "User Data");
+            if (browser.Equals("Brave", StringComparison.OrdinalIgnoreCase))
+            {
+                string bravePath = Path.Combine(localApp, "BraveSoftware", "Brave-Browser", "User Data");
+                if (Directory.Exists(bravePath)) return bravePath;
+                string braveRoaming = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BraveSoftware", "Brave-Browser", "User Data");
+                if (Directory.Exists(braveRoaming)) return braveRoaming;
+                return bravePath;
+            }
+
+            if (browser.Equals("Edge", StringComparison.OrdinalIgnoreCase))
+            {
+                string edgePath = Path.Combine(localApp, "Microsoft", "Edge", "User Data");
+                if (Directory.Exists(edgePath)) return edgePath;
+                string edgeRoaming = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Edge", "User Data");
+                if (Directory.Exists(edgeRoaming)) return edgeRoaming;
+                return edgePath;
+            }
+
+            string chromePath = Path.Combine(localApp, "Google", "Chrome", "User Data");
+            if (Directory.Exists(chromePath)) return chromePath;
+            string chromeRoaming = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Google", "Chrome", "User Data");
+            if (Directory.Exists(chromeRoaming)) return chromeRoaming;
+            return chromePath;
         }
 
         public static string FindChromeExecutable()
@@ -42,7 +64,8 @@ namespace ChromeGridLauncher.Services
             // 2. Registry lookup
             try
             {
-                using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe");
+                using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe")
+                                ?? Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe");
                 if (key?.GetValue("") is string regPath && File.Exists(regPath))
                     return regPath;
             }
@@ -63,11 +86,106 @@ namespace ChromeGridLauncher.Services
             return @"C:\Program Files\Google\Chrome\Application\chrome.exe";
         }
 
-        public List<ChromeProfile> ScanProfiles(string? customUserDataPath = null)
+        public static string FindBraveExecutable()
+        {
+            // 1. Program Files
+            string[] candidates = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "BraveSoftware", "Brave-Browser", "Application", "brave.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "BraveSoftware", "Brave-Browser", "Application", "brave.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BraveSoftware", "Brave-Browser", "Application", "brave.exe")
+            };
+
+            foreach (var path in candidates)
+            {
+                if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                    return path;
+            }
+
+            // 2. Registry lookup
+            try
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\brave.exe")
+                                ?? Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\brave.exe");
+                if (key?.GetValue("") is string regPath && File.Exists(regPath))
+                    return regPath;
+            }
+            catch { }
+
+            // 3. PATH search
+            string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
+            foreach (string p in pathEnv.Split(';', StringSplitOptions.RemoveEmptyEntries))
+            {
+                try
+                {
+                    string cand = Path.Combine(p.Trim(), "brave.exe");
+                    if (File.Exists(cand)) return cand;
+                }
+                catch { }
+            }
+
+            return @"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe";
+        }
+
+        public static string FindEdgeExecutable()
+        {
+            // 1. Program Files & LocalAppData
+            string[] candidates = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft", "Edge", "Application", "msedge.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft", "Edge", "Application", "msedge.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Edge", "Application", "msedge.exe")
+            };
+
+            foreach (var path in candidates)
+            {
+                if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                    return path;
+            }
+
+            // 2. Registry lookup
+            try
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe")
+                                ?? Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe");
+                if (key?.GetValue("") is string regPath && File.Exists(regPath))
+                    return regPath;
+            }
+            catch { }
+
+            // 3. PATH search
+            string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
+            foreach (string p in pathEnv.Split(';', StringSplitOptions.RemoveEmptyEntries))
+            {
+                try
+                {
+                    string cand = Path.Combine(p.Trim(), "msedge.exe");
+                    if (File.Exists(cand)) return cand;
+                }
+                catch { }
+            }
+
+            return @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe";
+        }
+
+        public static string FindBrowserExecutable(string browser = "Chrome", string? overridePath = null)
+        {
+            if (!string.IsNullOrWhiteSpace(overridePath) && File.Exists(overridePath))
+                return overridePath;
+
+            if (browser.Equals("Brave", StringComparison.OrdinalIgnoreCase))
+                return FindBraveExecutable();
+            if (browser.Equals("Edge", StringComparison.OrdinalIgnoreCase))
+                return FindEdgeExecutable();
+
+            return FindChromeExecutable();
+        }
+
+        public List<ChromeProfile> ScanProfiles(string? customUserDataPath = null, string browser = "Chrome")
         {
             string userDataDir = !string.IsNullOrWhiteSpace(customUserDataPath) && Directory.Exists(customUserDataPath)
                 ? customUserDataPath
-                : GetDefaultUserDataPath();
+                : GetDefaultUserDataPath(browser);
 
             string localStatePath = Path.Combine(userDataDir, "Local State");
             var profiles = new List<ChromeProfile>();
@@ -122,6 +240,11 @@ namespace ChromeGridLauncher.Services
                     {
                         string cand2 = Path.Combine(userDataDir, key, "Google Profile Picture.png");
                         if (File.Exists(cand2)) avatarPath = cand2;
+                    }
+                    if (string.IsNullOrWhiteSpace(avatarPath))
+                    {
+                        string cand3 = Path.Combine(userDataDir, key, "Edge Profile Picture.png");
+                        if (File.Exists(cand3)) avatarPath = cand3;
                     }
 
                     int colorIdx = Math.Abs((key + displayName).GetHashCode()) % PaletteColors.Length;

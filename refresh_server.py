@@ -46,6 +46,15 @@ class ConnectedTab:
     screen_y: int = 0
     outer_w: int = 0
     outer_h: int = 0
+    session_exp: float = 0.0
+    session_remaining_sec: int = -1
+    has_open_slots: bool = False
+    dates_open: List[str] = None
+    extension: str = "phylakon"
+
+    def __post_init__(self):
+        if self.dates_open is None:
+            self.dates_open = []
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -581,7 +590,31 @@ class RefreshServer:
                         if "screen_y" in data:
                             client_tab.screen_y = int(data.get("screen_y", 0))
 
-                    elif msg_type in ("refresh_ack", "slot_ack", "open_tab_ack", "thunder_config_ack"):
+                    elif msg_type in ("session_update", "SESSION_UPDATE"):
+                        client_tab.last_seen = time.time()
+                        exp_date = float(data.get("expirationDate") or data.get("expiration_date") or 0.0)
+                        rem_sec = int(data.get("remainingSec") or data.get("remaining_sec") or -1)
+                        client_tab.session_exp = exp_date
+                        client_tab.session_remaining_sec = rem_sec
+                        self._schedule_clients_changed_notification(0.5)
+
+                    elif msg_type in ("dates_found", "slots_open", "SLOTS_OPEN"):
+                        client_tab.last_seen = time.time()
+                        dates = data.get("dates") or []
+                        client_tab.has_open_slots = True
+                        client_tab.dates_open = dates
+                        self.log(f"⚡ [OPEN SLOTS] Tab '{client_tab.title}' discovered open dates: {', '.join(dates)}", "CRITICAL")
+                        self._schedule_clients_changed_notification(0.1)
+
+                    elif msg_type in ("slot_timing_shared", "SLOT_TIMING_SHARED", "timing_share"):
+                        client_tab.last_seen = time.time()
+                        sec_val = data.get("sec")
+                        ms_val = data.get("ms")
+                        self.log(f"⚡ [TIMING SHARED] Tab '{client_tab.title}' discovered winning timing: Sec={sec_val}, MS={ms_val}! Relaying to all grid Chromes...", "CRITICAL")
+                        # Relay timing immediately to all other connected tabs
+                        self.broadcast_slot_click(sec=sec_val, ms=ms_val, target="all")
+
+                    elif msg_type in ("refresh_ack", "slot_ack", "open_tab_ack", "thunder_config_ack", "phylakon_config_ack"):
                         success = bool(data.get("success", False))
                         dur = int(data.get("duration_ms", 0))
                         strategy = str(data.get("strategy", ""))
@@ -877,6 +910,107 @@ class RefreshServer:
         elif not self.loop or not self.loop.is_running():
             self.log("Server event loop is not running. Cannot broadcast open-tab.", "ERROR")
 
+        return cmd_id
+
+    def broadcast_phylakon_config(self, settings: dict, target_tab_ids: Optional[List[str]] = None) -> str:
+        """Dispatches phylakon_config + thunder_config command to all or specifically targeted Chrome tabs."""
+        cmd_id = f"phylakon_{int(time.time()*1000)}"
+        self.stats["total_broadcasts"] += 1
+        self.stats["last_broadcast_time"] = time.time()
+        self.stats["last_command_id"] = cmd_id
+
+        payload = {
+            "action": "phylakon_config",
+            "type": "phylakon_config",
+            "command_id": cmd_id,
+            "settings": settings,
+            "timestamp": time.time()
+        }
+
+        payload_bytes = json.dumps(payload).encode("utf-8")
+        target_tab_set = set(target_tab_ids) if target_tab_ids is not None else None
+
+        with self._lock:
+            if target_tab_set is not None:
+                active_ws_clients = [ws for ws, tab in self.clients.items() if tab.tab_id in target_tab_set]
+                active_waiters = [(tid, fut) for tid, fut in self.pending_poll_waiters.items() if tid in target_tab_set]
+                for tid, _ in active_waiters:
+                    self.pending_poll_waiters.pop(tid, None)
+            else:
+                active_ws_clients = list(self.clients.keys())
+                active_waiters = list(self.pending_poll_waiters.items())
+                self.pending_poll_waiters.clear()
+
+            delivered = set(t[0] for t in active_waiters)
+            self.recent_broadcast = {
+                "command_id": cmd_id,
+                "payload": payload,
+                "payload_bytes": payload_bytes,
+                "expires_at": time.time() + 5.0,
+                "delivered_to": delivered
+            }
+
+            target_count = len(active_ws_clients) + len(active_waiters)
+            if target_count == 0 and len(self.http_clients) == 0:
+                self.log("Phylakon config requested, but no targeted Chrome tabs are connected.", "WARN")
+                return cmd_id
+
+            if target_tab_set is not None:
+                target_count = len(target_tab_set)
+            else:
+                target_count = len(self.clients) + len(self.http_clients)
+
+        self._create_broadcast_tracker(cmd_id, "phylakon_config", target_count)
+
+        dispatched_ws = 0
+        for ws in active_ws_clients:
+            if getattr(ws, "open", True) and not getattr(ws, "closed", False):
+                try:
+                    asyncio.run_coroutine_threadsafe(ws.send(payload_bytes), self.loop)
+                    dispatched_ws += 1
+                except Exception:
+                    pass
+
+        dispatched_http = 0
+        for tid, fut in active_waiters:
+            if not fut.done():
+                try:
+                    fut.set_result(json.dumps(payload))
+                    dispatched_http += 1
+                except Exception:
+                    pass
+
+        reg = settings.get("region", "Spain")
+        vt = settings.get("vtData", {})
+        summary = f"{reg} | {vt.get('city','')} | {vt.get('category','')} | {vt.get('type','')} (Pax: {vt.get('members',1)})"
+        self.log(
+            f"⚡ Dispatched Phylakon Config [{summary}] to {dispatched_ws + dispatched_http} tab(s) (WS: {dispatched_ws}, HTTP: {dispatched_http})",
+            "INFO"
+        )
+        return cmd_id
+
+    def broadcast_applicant_profile(self, applicant: dict, target_tab_ids: Optional[List[str]] = None) -> str:
+        """Dispatches applicant profile data (name, passport, birth, expiry, address, postal, city) to tabs."""
+        cmd_id = f"applicant_{int(time.time()*1000)}"
+        payload = {
+            "action": "fill_applicant",
+            "type": "fill_applicant",
+            "command_id": cmd_id,
+            "applicant": applicant,
+            "timestamp": time.time()
+        }
+        payload_bytes = json.dumps(payload).encode("utf-8")
+        with self._lock:
+            active_ws = list(self.clients.keys())
+        dispatched = 0
+        for ws in active_ws:
+            if getattr(ws, "open", True) and not getattr(ws, "closed", False):
+                try:
+                    asyncio.run_coroutine_threadsafe(ws.send(payload_bytes), self.loop)
+                    dispatched += 1
+                except Exception:
+                    pass
+        self.log(f"⚡ Dispatched Applicant Profile for '{applicant.get('name','')}' to {dispatched} tab(s).", "INFO")
         return cmd_id
 
     def broadcast_thunder_config(self, settings: dict, target_tab_ids: Optional[List[str]] = None) -> str:

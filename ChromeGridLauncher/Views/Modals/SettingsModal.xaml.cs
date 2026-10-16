@@ -15,7 +15,21 @@ namespace ChromeGridLauncher.Views.Modals
             InitializeComponent();
             CurrentSettings = settings;
 
+            CmbBrowser.ItemsSource = new List<string> { "Chrome", "Brave", "Edge" };
+            if (string.Equals(settings.SelectedBrowser, "Brave", System.StringComparison.OrdinalIgnoreCase))
+                CmbBrowser.SelectedItem = "Brave";
+            else if (string.Equals(settings.SelectedBrowser, "Edge", System.StringComparison.OrdinalIgnoreCase))
+                CmbBrowser.SelectedItem = "Edge";
+            else
+                CmbBrowser.SelectedItem = "Chrome";
+
             TxtChromeExe.Text = settings.ChromePathOverride;
+            TxtBraveExe.Text = settings.BravePathOverride;
+            TxtEdgeExe.Text = settings.EdgePathOverride;
+            TxtChromeUserData.Text = settings.ChromeUserDataOverride;
+            TxtBraveUserData.Text = settings.BraveUserDataOverride;
+            TxtEdgeUserData.Text = settings.EdgeUserDataOverride;
+
             TxtTargetUrl.Text = settings.TargetRefreshUrl;
             TxtPort.Text = settings.RefreshServerPort.ToString();
             TxtLaunchInterval.Text = settings.LaunchInterval.ToString();
@@ -31,8 +45,8 @@ namespace ChromeGridLauncher.Views.Modals
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "Executable Files (*.exe)|*.exe|All Files (*.*)|*.*",
-                Title = "Select Chrome Executable"
+                Filter = "Chrome Executable (chrome.exe)|chrome.exe|Executable Files (*.exe)|*.exe|All Files (*.*)|*.*",
+                Title = "Select Google Chrome Executable"
             };
 
             if (dlg.ShowDialog() == true)
@@ -41,9 +55,83 @@ namespace ChromeGridLauncher.Views.Modals
             }
         }
 
+        private void OnBrowseBraveClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Brave Executable (brave.exe)|brave.exe|Executable Files (*.exe)|*.exe|All Files (*.*)|*.*",
+                Title = "Select Brave Browser Executable"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                TxtBraveExe.Text = dlg.FileName;
+            }
+        }
+
+        private void OnBrowseEdgeClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Edge Executable (msedge.exe)|msedge.exe|Executable Files (*.exe)|*.exe|All Files (*.*)|*.*",
+                Title = "Select Microsoft Edge Executable"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                TxtEdgeExe.Text = dlg.FileName;
+            }
+        }
+
+        private void OnBrowseChromeUserDataClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = "Select Chrome User Data Directory"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                TxtChromeUserData.Text = dlg.FolderName;
+            }
+        }
+
+        private void OnBrowseBraveUserDataClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = "Select Brave User Data Directory"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                TxtBraveUserData.Text = dlg.FolderName;
+            }
+        }
+
+        private void OnBrowseEdgeUserDataClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = "Select Edge User Data Directory"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                TxtEdgeUserData.Text = dlg.FolderName;
+            }
+        }
+
         private void OnSaveClick(object sender, RoutedEventArgs e)
         {
+            CurrentSettings.SelectedBrowser = CmbBrowser.SelectedItem?.ToString() ?? "Chrome";
             CurrentSettings.ChromePathOverride = TxtChromeExe.Text.Trim();
+            CurrentSettings.BravePathOverride = TxtBraveExe.Text.Trim();
+            CurrentSettings.EdgePathOverride = TxtEdgeExe.Text.Trim();
+            CurrentSettings.ChromeUserDataOverride = TxtChromeUserData.Text.Trim();
+            CurrentSettings.BraveUserDataOverride = TxtBraveUserData.Text.Trim();
+            CurrentSettings.EdgeUserDataOverride = TxtEdgeUserData.Text.Trim();
+
             CurrentSettings.TargetRefreshUrl = TxtTargetUrl.Text.Trim();
 
             if (int.TryParse(TxtPort.Text.Trim(), out int port))

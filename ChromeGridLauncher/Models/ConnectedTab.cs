@@ -23,6 +23,65 @@ namespace ChromeGridLauncher.Models
         private int _screenY = 0;
         private int _outerW = 0;
         private int _outerH = 0;
+        private int _sessionRemainingSec = -1;
+        private double _sessionExpMs = 0.0;
+        private bool _hasOpenSlots = false;
+        private string _datesOpen = string.Empty;
+
+        public int SessionRemainingSec
+        {
+            get => _sessionRemainingSec;
+            set
+            {
+                if (_sessionRemainingSec != value)
+                {
+                    _sessionRemainingSec = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SessionCountdownText));
+                    OnPropertyChanged(nameof(SessionBadgeColor));
+                }
+            }
+        }
+
+        public double SessionExpMs
+        {
+            get => _sessionExpMs;
+            set { if (_sessionExpMs != value) { _sessionExpMs = value; OnPropertyChanged(); } }
+        }
+
+        public bool HasOpenSlots
+        {
+            get => _hasOpenSlots;
+            set { if (_hasOpenSlots != value) { _hasOpenSlots = value; OnPropertyChanged(); } }
+        }
+
+        public string DatesOpen
+        {
+            get => _datesOpen;
+            set { if (_datesOpen != value) { _datesOpen = value; OnPropertyChanged(); } }
+        }
+
+        public string SessionCountdownText
+        {
+            get
+            {
+                if (_sessionRemainingSec < 0) return "No Session";
+                int min = _sessionRemainingSec / 60;
+                int sec = _sessionRemainingSec % 60;
+                return $"{min}m {sec:D2}s";
+            }
+        }
+
+        public string SessionBadgeColor
+        {
+            get
+            {
+                if (_sessionRemainingSec < 0) return "#64748B";
+                if (_sessionRemainingSec < 120) return "#EF4444";
+                if (_sessionRemainingSec < 300) return "#F59E0B";
+                return "#10B981";
+            }
+        }
 
         public string TabId
         {

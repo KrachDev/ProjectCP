@@ -679,6 +679,39 @@ namespace ChromeGridLauncher.Services
                     OnAckReceived?.Invoke(dict);
                     Log($"[Thunder] Configuration verified on tab {tab.TabId.Substring(0, Math.Min(8, tab.TabId.Length))}: {(success ? "Success" : "Failed")}", success ? "SUCCESS" : "WARNING");
                 }
+                else if (action == "session_update" || action == "SESSION_UPDATE")
+                {
+                    double expDate = root.TryGetProperty("expirationDate", out var ed) ? ed.GetDouble() : 0.0;
+                    int remSec = root.TryGetProperty("remainingSec", out var rs) ? rs.GetInt32() : -1;
+                    tab.SessionRemainingSec = remSec;
+                    tab.SessionExpMs = expDate;
+                    NotifyClientsChanged();
+                }
+                else if (action == "dates_found" || action == "DATES_FOUND" || action == "slots_open" || action == "SLOTS_OPEN")
+                {
+                    var dates = new List<string>();
+                    if (root.TryGetProperty("dates", out var dArr) && dArr.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var d in dArr.EnumerateArray()) dates.Add(d.GetString() ?? "");
+                    }
+                    tab.HasOpenSlots = true;
+                    tab.DatesOpen = string.Join(", ", dates);
+                    Log($"⚡ [ALERT: OPEN SLOTS] {tab.DisplayTitle}: {tab.DatesOpen}", "CRITICAL");
+                    try { AudioAlertService.PlaySuccessBeep(); } catch { }
+                    NotifyClientsChanged(immediate: true);
+                }
+                else if (action == "phylakon_config_ack")
+                {
+                    bool success = root.TryGetProperty("success", out var succ) && succ.GetBoolean();
+                    var dict = new Dictionary<string, object>
+                    {
+                        ["type"] = "phylakon_config_ack",
+                        ["tab_id"] = tab.TabId,
+                        ["success"] = success
+                    };
+                    OnAckReceived?.Invoke(dict);
+                    Log($"[Phylakon] Configuration confirmed on tab {tab.TabId.Substring(0, Math.Min(8, tab.TabId.Length))}", "SUCCESS");
+                }
             }
             catch (Exception ex)
             {

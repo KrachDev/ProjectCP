@@ -1,9 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
-title ChromeGrid Quick Updater - Test PC Receiver
+title Universal Quick Updater - Test PC Receiver
 
 echo ========================================================
-echo       ChromeGrid Test PC Auto-Updater
+echo       Pure Extension Receiver (C:\PhylakonExtension)
 echo ========================================================
 echo.
 
@@ -27,7 +27,7 @@ if %errorlevel%==0 (
     )
 )
 
-set DL_FILE=%TEMP%\ChromeGrid_Update_%RANDOM%.zip
+set DL_FILE=%TEMP%\Universal_Update_%RANDOM%.zip
 echo.
 echo [*] Downloading update from: !URL!
 curl.exe -s -L "!URL!" -o "!DL_FILE!"
@@ -42,30 +42,37 @@ echo [*] Download complete! Checking package contents...
 
 :: Detect if this is an extension update or full package
 set IS_EXT=0
-tar -tf "!DL_FILE!" 2>nul | findstr /i "content.js" >nul
+tar -tf "!DL_FILE!" 2>nul | findstr /i "manifest.json" >nul
 if %errorlevel%==0 set IS_EXT=1
 
 if "!IS_EXT!"=="1" (
     echo [*] Detected Chrome Extension Update.
-    echo [*] Extracting to C:\ChromeGridExtension...
-    if not exist "C:\ChromeGridExtension" mkdir "C:\ChromeGridExtension"
-    tar -xf "!DL_FILE!" -C "C:\ChromeGridExtension" >nul 2>&1
+    echo [*] Extracting to pure extension root: C:\PhylakonExtension ...
+    if not exist "C:\PhylakonExtension" mkdir "C:\PhylakonExtension"
+    tar -xf "!DL_FILE!" -C "C:\PhylakonExtension" >nul 2>&1
     if not !errorlevel!==0 (
-        powershell -NoProfile -Command "Expand-Archive -Path '!DL_FILE!' -DestinationPath 'C:\ChromeGridExtension' -Force"
+        powershell -NoProfile -Command "Expand-Archive -Path '!DL_FILE!' -DestinationPath 'C:\PhylakonExtension' -Force"
     )
 
-    :: Dispatch instant zero-click reload command to running ChromeGridLauncher (if active)
+    :: Keep C:\Phylakon and C:\ChromeGridExtension synchronized
+    if not exist "C:\Phylakon" (
+        cmd /c 'mklink /J "C:\Phylakon" "C:\PhylakonExtension"' >nul 2>&1
+    )
+    if exist "C:\ChromeGridExtension" (
+        tar -xf "!DL_FILE!" -C "C:\ChromeGridExtension" >nul 2>&1
+    )
+
+    :: Dispatch instant zero-click reload command to running server / controller (if active)
     curl.exe -s http://127.0.0.1:8765/reload_extension >nul 2>&1
 
     echo.
     echo ========================================================
-    echo   [SUCCESS] C:\ChromeGridExtension updated!
+    echo   [SUCCESS] C:\PhylakonExtension updated!
     echo.
-    echo   ACTIVATION (Do ONE of the following):
-    echo   1. If ChromeGridLauncher is running, reload command was sent!
-    echo   2. Or in Chrome, go to chrome://extensions and click 
-    echo      the reload button (circular arrow) on "Chrome Grid Sync Bridge"
-    echo   3. Or restart Chrome from ChromeGridLauncher.
+    echo   ACTIVATION:
+    echo   1. In Chrome (chrome://extensions), click the reload 
+    echo      button on "Phylakon - Legend Reborn".
+    echo   2. Or relaunch via test_real_world.bat.
     echo ========================================================
 ) else (
     echo [*] Detected Full Package / Launcher Update.
